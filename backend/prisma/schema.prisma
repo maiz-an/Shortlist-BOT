@@ -112,6 +112,8 @@ model CVProfile {
   skills               String[]
   preferredJobKeywords String[]
   excludedKeywords     String[]
+  textContent          String?
+  experienceYears      Float?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

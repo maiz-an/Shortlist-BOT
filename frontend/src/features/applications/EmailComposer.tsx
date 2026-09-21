@@ -32,7 +32,10 @@ export function EmailComposer({ app }: { app: ApplicationDetail }) {
 
   const generate = () =>
     gen.mutate(app.id, {
-      onSuccess: (r) => toast.success(r.generatedBy === 'template' ? 'Local model unavailable, so a plain template was used. Please review it.' : 'Email generated'),
+      onSuccess: (r) => {
+        if (r.fit === 'WEAK') toast.error('Email written, but this job barely matches your CV. Think twice before applying.');
+        else toast.success(r.generatedBy === 'template' ? 'A short fact-only version was used because the AI draft did not pass the honesty checks. Please review it.' : 'Email generated');
+      },
       onError: (e) => toast.error(errMsg(e)),
     });
 

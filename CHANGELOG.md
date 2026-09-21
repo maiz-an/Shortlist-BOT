@@ -3,6 +3,24 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.3.0] - 2026-09-22
+
+### Changed
+- **Scores and emails now come from your CV, not from Settings.** When you upload a PDF or DOCX, the app reads its text and works out your years of experience from the job dates on it. Settings keeps only name, email and phone. The old "Years of experience", "Summary" and "Experience notes" fields are gone.
+- **Emails are written in two steps.** First the AI finds the single strongest honest match between the ad and your CV and quotes the CV line that proves it (the quote is checked against the CV). Then it writes a short email around that match, naming the real employer.
+- **Emails are short and human.** About 60 to 100 words, plain everyday English, no em dashes and no stock phrases. Openers and closing lines vary from job to job, and the layout (greeting, paragraphs, sign-off) is fixed in code.
+- **Honesty checks.** A draft is rejected and rewritten if it claims skills you lack, uses a technical term or figure that is not on your CV, sounds more senior than the CV ("managed", "led", "senior"), or uses stock phrases. If the ad asks for more years than your CV shows, the email says so plainly, with wording worked out from the numbers.
+- If a CV has no readable text, or the AI keeps failing the checks, a short fact-only email is used, built from a real CV line and employer.
+- A warning appears when a job barely matches your CV.
+
+### Added
+- The CVs page shows how many years of experience were read from each CV.
+- New columns `CVProfile.textContent` and `CVProfile.experienceYears` are added automatically on start (and by migration `20260922000000_cv_text`).
+- The database connection is retried for a few seconds on start.
+
+### Upgrading from 1.2.x
+Nothing to do. On first start the app reads the text of CVs you already uploaded. Scores of existing jobs change only when they are analysed again.
+
 ## [1.2.0] - 2026-09-22
 
 ### Added

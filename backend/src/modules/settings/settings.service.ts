@@ -20,9 +20,6 @@ export interface CandidateSettings {
   name: string;
   email: string;
   phone: string;
-  yearsExperience: number | null;
-  summary: string;
-  experience: string;
 }
 
 export interface AutoApplySettings {
@@ -40,7 +37,7 @@ export const SETTING_DEFAULTS = {
     excellent: [90, 100],
   } as Thresholds,
   scheduler: { enabled: false, intervalHours: 6, profileIds: [], sourceKeys: [] } as SchedulerSettings,
-  candidate: { name: '', email: '', phone: '', yearsExperience: null, summary: '', experience: '' } as CandidateSettings,
+  candidate: { name: '', email: '', phone: '' } as CandidateSettings,
   auto_apply: { enabled: false, minScore: 80, dailyLimit: 10 } as AutoApplySettings,
   pipeline: { defaultMinScore: 50, fetchDescriptions: true, maxDescriptionFetches: 25 },
 };

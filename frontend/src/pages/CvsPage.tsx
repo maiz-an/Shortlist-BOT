@@ -49,6 +49,9 @@ function CvCard({ cv, onEdit, onDelete }: { cv: CvProfile; onEdit: () => void; o
               <a className="text-brand-600 hover:underline" href={apiClient.url(`/cv-profiles/${cv.id}/file`)} target="_blank" rel="noreferrer">{cv.originalFileName ?? 'View file'}</a>
             </>
           ) : <Badge className="bg-amber-100 text-amber-800">No file uploaded</Badge>}
+          {cv.fileExists && (cv.textReadable
+            ? <Badge className="bg-slate-100 text-slate-600">{cv.experienceYears != null ? `${cv.experienceYears} years read from CV` : 'Text read, no job dates found'}</Badge>
+            : <Badge className="bg-amber-100 text-amber-800">Text could not be read (use PDF or DOCX)</Badge>)}
           <input
             ref={input} type="file" hidden accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             onChange={(e) => {

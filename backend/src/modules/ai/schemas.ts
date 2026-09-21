@@ -47,3 +47,12 @@ export const emailSchema = z.object({
   body: z.string().trim().min(40).max(4000),
 });
 export type EmailOutput = z.infer<typeof emailSchema>;
+
+/** The one strongest honest match between a job ad and the CV; the email is written around it. */
+export const angleSchema = z.object({
+  requirement: z.string().trim().min(3).max(200),
+  evidence: z.string().trim().min(5).max(400),
+  detail: z.string().trim().max(300).default(''),
+  fit: z.enum(['STRONG', 'PARTIAL', 'WEAK']),
+});
+export type EmailAngle = z.infer<typeof angleSchema>;

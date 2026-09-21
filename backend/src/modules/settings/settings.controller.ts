@@ -15,9 +15,6 @@ const schemas: Record<SettingKey, z.ZodTypeAny> = {
     name: z.string().max(120),
     email: z.string().max(200),
     phone: z.string().max(50),
-    yearsExperience: z.number().min(0).max(60).nullable(),
-    summary: z.string().max(2000),
-    experience: z.string().max(6000),
   }),
   auto_apply: z.object({
     enabled: z.boolean(),

@@ -166,7 +166,7 @@ async function main() {
   await prisma.systemSetting.upsert({
     where: { key: 'candidate' },
     update: {},
-    create: { key: 'candidate', value: { name: 'Maizan', email: '', phone: '', yearsExperience: null, summary: '', experience: '' } },
+    create: { key: 'candidate', value: { name: 'Maizan', email: '', phone: '' } },
   });
 
   console.log('Seed complete:', {

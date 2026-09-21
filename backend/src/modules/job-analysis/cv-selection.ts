@@ -7,6 +7,8 @@ export interface CvCandidate {
   skills: string[];
   preferredJobKeywords: string[];
   excludedKeywords: string[];
+  /** Years of work experience read from the CV's own dates. */
+  years?: number | null;
 }
 
 export interface CvRanking {

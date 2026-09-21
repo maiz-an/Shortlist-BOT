@@ -51,17 +51,17 @@ export class AnalysisService {
     if (inPipeline) await this.apps.setStatus(jobId, 'ANALYZING');
 
     try {
-      const [cvRows, profiles, candidate, thresholds, pipeline] = await Promise.all([
+      const [cvRows, profiles, thresholds, pipeline] = await Promise.all([
         this.prisma.cVProfile.findMany({ where: { enabled: true } }),
         this.prisma.jobSearchProfile.findMany({ where: { enabled: true } }),
-        this.settings.get('candidate'),
         this.settings.get('match_score_thresholds'),
         this.settings.get('pipeline'),
       ]);
       const cvs: CvCandidate[] = cvRows.map((c) => ({
         id: c.id, name: c.name, category: c.category, skills: c.skills,
-        preferredJobKeywords: c.preferredJobKeywords, excludedKeywords: c.excludedKeywords,
+        preferredJobKeywords: c.preferredJobKeywords, excludedKeywords: c.excludedKeywords, years: c.experienceYears,
       }));
+      const knownYears = cvs.map((c) => c.years).filter((y): y is number => typeof y === 'number');
       const constraints = {
         excludedKeywords: [...new Set(profiles.flatMap((p) => p.excludedKeywords))],
         preferredJobTypes: [...new Set(profiles.flatMap((p) => p.preferredJobTypes))],
@@ -71,7 +71,7 @@ export class AnalysisService {
 
       const ai = await runAiAnalysis(this.ai, {
         title: job.title, company: job.company, location: job.location, description: job.description || '(no description available)',
-        cvs, candidate: { yearsExperience: candidate.yearsExperience, preferredLocations: constraints.preferredLocations },
+        cvs, candidate: { yearsExperience: knownYears.length ? Math.max(...knownYears) : null, preferredLocations: constraints.preferredLocations },
       });
 
       const aiCvId = cvs.some((c) => c.id === ai.recommendedCvId) ? ai.recommendedCvId : null; // never trust unknown ids
@@ -80,14 +80,16 @@ export class AnalysisService {
       if (pick.ambiguous) pick = await this.breakTie(jobText, cvs, pick);
       const cv = cvs.find((c) => c.id === pick.cvId) ?? null;
 
+      // Experience is judged from the CV that was picked (its own dates), never from a typed-in number.
+      const candidateYears = cv?.years ?? (knownYears.length ? Math.max(...knownYears) : null);
       const result = calculateScore({
         job: { ...jobText, location: job.location, jobType: job.jobType }, cv, constraints,
-        ai, candidateYears: candidate.yearsExperience, cvRelevance: pick.relevance,
+        ai, candidateYears, cvRelevance: pick.relevance,
       });
       const recommendation = recommendationFor(result.score, thresholds, result.excludedHits, ai);
       const reason = buildReason({
         score: result.score, recommendation, hasCv: !!cv, matched: result.matchedSkills, missing: result.missingSkills,
-        requiredYears: result.experienceRequiredYears, candidateYears: candidate.yearsExperience,
+        requiredYears: result.experienceRequiredYears, candidateYears,
         experienceCompatible: result.experienceCompatible, locationCompatible: result.locationCompatible,
         excludedHits: result.excludedHits, ai: { recommendation: ai.recommendation, matchScore: ai.matchScore, reason: ai.reason },
       });

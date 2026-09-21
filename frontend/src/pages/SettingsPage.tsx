@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useProfiles, useSources } from '../features/search/api';
 import { useAiStatus, useSaveSetting, useSettings } from '../features/settings/api';
 import type { Settings } from '../types';
-import { Badge, Button, Card, ErrorState, Field, Input, Loading, PageHeader, Textarea, Toggle, cx, errMsg, useToast } from '../components/ui';
+import { Badge, Button, Card, ErrorState, Field, Input, Loading, PageHeader, Toggle, cx, errMsg, useToast } from '../components/ui';
 import { useEmailStatus } from '../features/settings/api';
 import { APP_VERSION } from '../version';
 
@@ -89,14 +89,12 @@ export function SettingsPage() {
         >
           {tab === 'profile' && (
             <>
-                    <Card title="Your profile (used for emails and scoring)">
+                    <Card title="Your details (used to sign emails)">
+                      <p className="mb-4 text-sm text-slate-500">Only your contact details live here. Your experience, years and skills are read from your CV files, so scoring and emails always match the CV they use.</p>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Name"><Input value={c.name} onChange={(e) => candidate.setV({ ...c, name: e.target.value })} /></Field>
-                        <Field label="Years of experience" hint="Used to check job experience requirements."><Input type="number" min={0} max={60} value={c.yearsExperience ?? ''} onChange={(e) => candidate.setV({ ...c, yearsExperience: e.target.value === '' ? null : Number(e.target.value) })} /></Field>
                         <Field label="Email"><Input value={c.email} onChange={(e) => candidate.setV({ ...c, email: e.target.value })} /></Field>
                         <Field label="Phone"><Input value={c.phone} onChange={(e) => candidate.setV({ ...c, phone: e.target.value })} /></Field>
-                        <div className="sm:col-span-2"><Field label="Summary"><Textarea rows={2} maxLength={2000} value={c.summary} onChange={(e) => candidate.setV({ ...c, summary: e.target.value })} /></Field></div>
-                        <div className="sm:col-span-2"><Field label="Experience notes" hint="Only facts written here (and on your CV skills) will be used in emails."><Textarea rows={5} maxLength={6000} value={c.experience} onChange={(e) => candidate.setV({ ...c, experience: e.target.value })} /></Field></div>
                       </div>
                       <Button className="mt-4" variant="primary" loading={candidate.saving} onClick={candidate.save}>Save profile</Button>
                     </Card>
@@ -216,7 +214,6 @@ export function SettingsPage() {
                         <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Version</dt><dd className="font-medium tabular-nums text-slate-900">{APP_VERSION}</dd></div>
                         <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Changes</dt><dd><a className="text-brand-600 hover:underline" href="https://github.com/maiz-an/Shortlist-BOT/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer noopener">Changelog</a></dd></div>
                       </dl>
-                      <p className="mt-3 font-display text-xs italic text-slate-400"> - a Maiz&apos;s one - </p>
                     </Card>
             </>
           )}

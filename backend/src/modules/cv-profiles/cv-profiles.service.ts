@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCvProfileDto, UpdateCvProfileDto } from './cv-profiles.dto';
+import { cvFacts, extractCvText } from './cv-text';
 
 export const MAX_CV_BYTES = 5 * 1024 * 1024;
 const ALLOWED: Record<string, (b: Buffer) => boolean> = {
@@ -27,12 +28,32 @@ export function validateCvUpload(originalName: string, buffer: Buffer): string {
 }
 
 @Injectable()
-export class CvProfilesService {
+export class CvProfilesService implements OnApplicationBootstrap {
   private readonly logger = new Logger(CvProfilesService.name);
   private readonly dir: string;
 
   constructor(private readonly prisma: PrismaService, config: ConfigService) {
     this.dir = path.resolve(process.cwd(), config.get<string>('CV_STORAGE_PATH', './storage/cvs'));
+  }
+
+  /** CVs uploaded before the app could read them get their text filled in once, on start. */
+  async onApplicationBootstrap() {
+    // Never let this stop the API from starting (for example before a database update has been applied).
+    const pending = await this.prisma.cVProfile.findMany({ where: { filePath: { not: null }, textContent: null } }).catch(() => []);
+    for (const cv of pending) {
+      const abs = await this.resolveFile(cv);
+      if (!abs) continue;
+      await this.storeText(cv.id, await fs.readFile(abs), cv.originalFileName ?? cv.filePath ?? '').catch(() => undefined);
+    }
+  }
+
+  /** Reads the CV file and keeps its text and years of experience; scoring and emails use only these. */
+  private async storeText(id: string, buffer: Buffer, fileName: string) {
+    const text = await extractCvText(buffer, fileName);
+    await this.prisma.cVProfile.update({
+      where: { id },
+      data: { textContent: text, experienceYears: text ? cvFacts(text).years : null },
+    });
   }
 
   list() {
@@ -83,8 +104,9 @@ export class CvProfilesService {
       data: { filePath: stored, originalFileName: path.basename(file.originalname).slice(0, 200) },
     });
     await this.deleteFile(cv.filePath);
+    await this.storeText(id, file.buffer, file.originalname);
     this.logger.log({ event: 'cv.uploaded', cvId: id, bytes: file.buffer.length });
-    return updated;
+    return this.get(id);
   }
 
   private async deleteFile(filePath: string | null) {

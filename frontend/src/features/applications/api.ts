@@ -53,7 +53,7 @@ export function useUpdateApplication() {
 export function useGenerateDraft() {
   const inv = useInvalidate();
   return useMutation({
-    mutationFn: (id: string) => apiClient.post<{ draft: EmailDraft; generatedBy: 'ai' | 'template' }>(`/applications/${id}/draft/generate`),
+    mutationFn: (id: string) => apiClient.post<{ draft: EmailDraft; generatedBy: 'ai' | 'template'; fit: 'STRONG' | 'PARTIAL' | 'WEAK' | null }>(`/applications/${id}/draft/generate`),
     onSuccess: inv,
   });
 }

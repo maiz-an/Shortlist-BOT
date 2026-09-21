@@ -107,7 +107,7 @@ Check: the sidebar's System box shows Backend, Database and Ollama with green do
 
 ## 7. First-time setup inside the app
 
-1. **Settings**: enter your name, years of experience and short experience notes. Emails only use facts written here and on your CV skills.
+1. **Settings**: enter your name, email and phone (used to sign emails). Your experience, years and skills are read from your CV files, so scoring and emails always match the CV they use.
 2. **CV profiles**: fill in each CV's skills and upload the PDF/DOC/DOCX file (max 5 MB).
 3. **Email**: connect Gmail (next section).
 4. **Dashboard, Find new jobs**, or **Search, Add job manually**. Good matches land in Review.

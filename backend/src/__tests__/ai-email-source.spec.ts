@@ -76,8 +76,22 @@ describe('AI JSON validation', () => {
 });
 
 describe('email generation', () => {
-  const ok = JSON.stringify({ subject: 'Application for Full Stack Developer', body: 'Dear team, I have worked with React and PostgreSQL on production apps. My CV is attached. Kind regards, Maizan' });
-  const bad = JSON.stringify({ subject: 'Application', body: 'Dear team, I am an expert in React and AWS and have shipped many systems. My CV is attached. Regards' });
+  const ok = JSON.stringify({ subject: 'Application for Full Stack Developer', body: `Hi team,
+
+I'm applying for the Full Stack Developer role. I've built and run React and PostgreSQL apps in production for the last few years, so most of your stack is what I work with daily.
+
+My CV is attached. Happy to talk whenever suits you.
+
+Thanks,
+Maizan` });
+  const bad = JSON.stringify({ subject: 'Application', body: `Hi team,
+
+I'm applying for the Full Stack Developer role. I've built React apps on AWS and shipped many production systems over the last few years, so your stack is what I work with daily.
+
+My CV is attached. Happy to talk whenever suits you.
+
+Thanks,
+Maizan` });
   it('returns a cleaned draft', async () => {
     const e = await generateEmail(fakeAi(ok), 'p', ['AWS']);
     expect(e.subject).toContain('Full Stack');
@@ -96,7 +110,7 @@ describe('email generation', () => {
     const f = buildFallbackEmail({ jobTitle: 'Dev', company: 'Acme', candidateName: 'Maizan', cvName: 'Dev CV', matchedSkills: ['React'], yearsExperience: null });
     expect(f.body).toContain('React');
     expect(f.body).not.toMatch(/years/);
-    expect(f.subject).toBe('Application for Dev');
+    expect(f.subject).toBe('Dev application - Maizan');
   });
 });
 

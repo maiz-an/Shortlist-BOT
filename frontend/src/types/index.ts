@@ -129,6 +129,8 @@ export interface CvProfile {
   skills: string[];
   preferredJobKeywords: string[];
   excludedKeywords: string[];
+  experienceYears?: number | null;
+  textReadable?: boolean;
   fileExists?: boolean;
 }
 
@@ -195,7 +197,7 @@ export interface Thresholds {
 export interface Settings {
   match_score_thresholds: Thresholds;
   scheduler: { enabled: boolean; intervalHours: number; profileIds: string[]; sourceKeys: string[] };
-  candidate: { name: string; email: string; phone: string; yearsExperience: number | null; summary: string; experience: string };
+  candidate: { name: string; email: string; phone: string };
   auto_apply: { enabled: boolean; minScore: number; dailyLimit: number };
   pipeline: { defaultMinScore: number; fetchDescriptions: boolean; maxDescriptionFetches: number };
 }

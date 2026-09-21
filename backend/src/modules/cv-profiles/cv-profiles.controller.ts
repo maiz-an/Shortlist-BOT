@@ -9,6 +9,12 @@ import type { Response } from 'express';
 import { CreateCvProfileDto, UpdateCvProfileDto } from './cv-profiles.dto';
 import { CvProfilesService, MAX_CV_BYTES, MIME } from './cv-profiles.service';
 
+/** The extracted CV text stays on the server; the app only needs to know it could be read. */
+function publicCv<T extends { textContent: string | null }>(cv: T) {
+  const { textContent, ...rest } = cv;
+  return { ...rest, textReadable: !!textContent };
+}
+
 const upload = FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_CV_BYTES, files: 1 } });
 
 @Controller('cv-profiles')
@@ -18,22 +24,22 @@ export class CvProfilesController {
   @Get()
   async list() {
     const rows = await this.cvs.list();
-    return Promise.all(rows.map(async (cv) => ({ ...cv, fileExists: !!(await this.cvs.resolveFile(cv)) })));
+    return Promise.all(rows.map(async (cv) => ({ ...publicCv(cv), fileExists: !!(await this.cvs.resolveFile(cv)) })));
   }
 
   @Get(':id')
-  get(@Param('id', ParseUUIDPipe) id: string) {
-    return this.cvs.get(id);
+  async get(@Param('id', ParseUUIDPipe) id: string) {
+    return publicCv(await this.cvs.get(id));
   }
 
   @Post()
-  create(@Body() dto: CreateCvProfileDto) {
-    return this.cvs.create(dto);
+  async create(@Body() dto: CreateCvProfileDto) {
+    return publicCv(await this.cvs.create(dto));
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCvProfileDto) {
-    return this.cvs.update(id, dto);
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCvProfileDto) {
+    return publicCv(await this.cvs.update(id, dto));
   }
 
   @Delete(':id')
@@ -44,9 +50,9 @@ export class CvProfilesController {
 
   @Post(':id/file')
   @UseInterceptors(upload)
-  uploadFile(@Param('id', ParseUUIDPipe) id: string, @UploadedFile() file?: Express.Multer.File) {
+  async uploadFile(@Param('id', ParseUUIDPipe) id: string, @UploadedFile() file?: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file uploaded (field name: file)');
-    return this.cvs.saveFile(id, file);
+    return publicCv(await this.cvs.saveFile(id, file));
   }
 
   @Get(':id/file')
