@@ -1,7 +1,7 @@
 {
-  "name": "job-app-automation-backend",
-  "version": "1.1.0",
-  "description": "Local-first job application automation backend",
+  "name": "shortlist-bot-backend",
+  "version": "1.1.1",
+  "description": "Shortlist BOT backend: NestJS API for job collection, local AI analysis, Gmail sending and tracking",
   "private": true,
   "scripts": {
     "build": "nest build",
@@ -71,5 +71,19 @@
     "prisma@5.22.0": true,
     "@prisma/client@5.22.0": true,
     "@prisma/engines@5.22.0": true
-  }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maiz-an/Shortlist-BOT.git",
+    "directory": "backend"
+  },
+  "homepage": "https://github.com/maiz-an/Shortlist-BOT#readme",
+  "bugs": {
+    "url": "https://github.com/maiz-an/Shortlist-BOT/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "maiz-an"
 }

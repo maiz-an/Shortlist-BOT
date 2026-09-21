@@ -1,7 +1,7 @@
 {
-  "name": "frontend",
+  "name": "shortlist-bot-frontend",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -32,5 +32,20 @@
   "overrides": {
     "rollup": "npm:@rollup/wasm-node@^4",
     "esbuild": "npm:esbuild-wasm@^0.25"
-  }
+  },
+  "description": "Shortlist BOT frontend: React interface",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maiz-an/Shortlist-BOT.git",
+    "directory": "frontend"
+  },
+  "homepage": "https://github.com/maiz-an/Shortlist-BOT#readme",
+  "bugs": {
+    "url": "https://github.com/maiz-an/Shortlist-BOT/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "maiz-an"
 }

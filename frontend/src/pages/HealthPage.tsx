@@ -7,7 +7,7 @@ import type { CheckStatus } from '../features/health/api';
 import { Item, Stagger } from '../components/motion';
 import { Badge, Card, ErrorState, Loading, PageHeader, cx } from '../components/ui';
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 
 function useTicker(ms = 1000) {
   const [, set] = useState(0);

@@ -3,6 +3,15 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.1.1] - 2026-09-21
+
+Repository housekeeping. No change to how the app behaves.
+
+### Added
+- MIT `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, issue and pull request templates, `.editorconfig`.
+- GitHub Actions CI: backend type-check and tests, frontend build, and a check that `VERSION`, both `package.json` files and the changelog agree.
+- Package metadata (name, description, repository, license, Node engine) and a fuller README with badges, feature list and roadmap.
+
 ## [1.1.0] - 2026-09-21
 
 ### Changed (action needed if you already run 1.0.0)
