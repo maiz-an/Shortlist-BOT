@@ -19,7 +19,7 @@ export class GmailProvider implements EmailProvider {
 
   private get clientId() { return this.config.get<string>('GMAIL_CLIENT_ID', ''); }
   private get clientSecret() { return this.config.get<string>('GMAIL_CLIENT_SECRET', ''); }
-  private get redirectUri() { return this.config.get<string>('GMAIL_REDIRECT_URI', 'http://localhost:4000/api/email/oauth/callback'); }
+  private get redirectUri() { return this.config.get<string>('GMAIL_REDIRECT_URI', 'http://localhost:5871/api/email/oauth/callback'); }
   private get secret() {
     const s = this.config.get<string>('TOKEN_ENCRYPTION_KEY', '');
     if (!s) throw new EmailAuthError('TOKEN_ENCRYPTION_KEY is not set in the backend .env');

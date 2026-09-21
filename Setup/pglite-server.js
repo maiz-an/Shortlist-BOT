@@ -6,7 +6,7 @@ const path = require('path');
 const { PGlite } = require('@electric-sql/pglite');
 const { PGLiteSocketServer } = require('@electric-sql/pglite-socket');
 
-const PORT = Number(process.env.PGLITE_PORT || 5432);
+const PORT = Number(process.env.PGLITE_PORT || 5872);
 
 async function applyMigrations(db) {
   const { rows } = await db.query(`SELECT to_regclass('public."Job"') AS t`);

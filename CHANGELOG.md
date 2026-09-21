@@ -3,6 +3,14 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.1.0] - 2026-09-21
+
+### Changed (action needed if you already run 1.0.0)
+- Default ports now use an uncommon range so Shortlist BOT can run next to your other projects (which usually take 3000, 4000, 5432):
+  app **5870**, API **5871**, built-in local database **5872**. Real PostgreSQL still uses its normal port 5432.
+- To upgrade an existing install, edit `backend/.env` (`PORT`, `FRONTEND_URL`, `GMAIL_REDIRECT_URI`, and the port in `DATABASE_URL` if you use the `Setup` database) and `frontend/.env` (`VITE_API_BASE_URL`), then change the **authorized redirect URI** on your Google OAuth client to `http://localhost:5871/api/email/oauth/callback`.
+- Open the app at http://localhost:5870.
+
 ## [1.0.0] - 2026-09-21
 
 First release.

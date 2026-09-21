@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5871/api';
 const API_TOKEN = import.meta.env.VITE_API_TOKEN ?? '';
 
 export class ApiError extends Error {
@@ -23,7 +23,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       },
     });
   } catch {
-    throw new ApiError(0, 'Cannot reach the backend. Is it running on port 4000?');
+    throw new ApiError(0, 'Cannot reach the backend. Is it running on port 5871?');
   }
 
   const text = await res.text();

@@ -8,8 +8,8 @@ Nothing is sent automatically. No paid APIs or cloud services.
 
 | Part | Stack | URL |
 |---|---|---|
-| Frontend | React, Vite, TypeScript, Tailwind, React Router, TanStack Query | http://localhost:3000 |
-| Backend | NestJS, Prisma, PostgreSQL, REST | http://localhost:4000/api |
+| Frontend | React, Vite, TypeScript, Tailwind, React Router, TanStack Query | http://localhost:5870 |
+| Backend | NestJS, Prisma, PostgreSQL, REST | http://localhost:5871/api |
 | AI | Ollama (`qwen3:8b`) behind an `AIProvider` interface | http://localhost:11434 |
 
 ## Quick start
@@ -22,7 +22,7 @@ npm run db:setup && npm run start:dev               # terminal 1
 cd ../frontend && npm install && npm run dev        # terminal 2
 ```
 Needs Node.js 20+, PostgreSQL (or the PGlite option in `Setup/`) and [Ollama](https://ollama.com) with `ollama pull qwen3:8b`.
-Open http://localhost:3000 (use `localhost`, not `127.0.0.1`).
+Open http://localhost:5870 (use `localhost`, not `127.0.0.1`). Ports are deliberately uncommon (app 5870, API 5871, local database 5872); see [SETUP.md](SETUP.md#ports).
 
 ## Versioning
 Current version: see [VERSION](VERSION). Releases follow semantic versioning and are listed in [CHANGELOG.md](CHANGELOG.md); each one is a git tag (`v1.0.0`, ...).
@@ -36,7 +36,7 @@ Current version: see [VERSION](VERSION). Releases follow semantic versioning and
 
 ### Gmail OAuth
 Google Cloud Console → create a project → enable **Gmail API** → OAuth consent screen (External, add yourself as test user) →
-Credentials → *OAuth client ID*, type **Web application**, redirect URI `http://localhost:4000/api/email/oauth/callback`.
+Credentials → *OAuth client ID*, type **Web application**, redirect URI `http://localhost:5871/api/email/oauth/callback`.
 Put the client ID/secret in `backend/.env` (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`) and restart the backend.
 Step-by-step Gmail setup is in [SETUP.md](SETUP.md). Only the `gmail.send` scope is requested. No password is ever stored; tokens are AES-256-GCM encrypted with `TOKEN_ENCRYPTION_KEY`.
 

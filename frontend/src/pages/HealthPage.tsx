@@ -7,7 +7,7 @@ import type { CheckStatus } from '../features/health/api';
 import { Item, Stagger } from '../components/motion';
 import { Badge, Card, ErrorState, Loading, PageHeader, cx } from '../components/ui';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 function useTicker(ms = 1000) {
   const [, set] = useState(0);
@@ -62,7 +62,7 @@ export function HealthPage() {
           <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
             <p className="font-medium">The backend is not responding.</p>
-            <p className="mt-0.5">The interface is running, but it cannot reach the API on port 4000. Start it with <code>npm run start:dev</code> in the backend folder.</p>
+            <p className="mt-0.5">The interface is running, but it cannot reach the API on port 5871. Start it with <code>npm run start:dev</code> in the backend folder.</p>
           </div>
         </div>
         <ErrorState error={error} onRetry={() => refetch()} />

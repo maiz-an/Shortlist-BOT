@@ -4,7 +4,7 @@ React + Vite + TypeScript + Tailwind CSS 3. See the [setup guide](../SETUP.md).
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
+npm run dev      # http://localhost:5870
 npm run build    # type-check and production build
 ```
 

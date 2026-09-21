@@ -52,7 +52,7 @@ export class EmailController {
   @Public()
   @Get('email/oauth/callback')
   async callback(@Query('code') code: string, @Query('state') state: string, @Query('error') error: string, @Res() res: Response) {
-    const front = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const front = this.config.get<string>('FRONTEND_URL', 'http://localhost:5870');
     if (error || !code || !state) return res.redirect(`${front}/email?error=${encodeURIComponent(error || 'missing_code')}`);
     try {
       await this.provider.handleCallback(code, state);

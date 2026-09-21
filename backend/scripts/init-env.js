@@ -17,7 +17,7 @@ if (fs.existsSync(backendEnv)) {
     .replace(/^TOKEN_ENCRYPTION_KEY=.*$/m, `TOKEN_ENCRYPTION_KEY=${rand(32)}`);
   fs.writeFileSync(backendEnv, text);
   if (!fs.existsSync(frontendEnv)) {
-    fs.writeFileSync(frontendEnv, `VITE_API_BASE_URL=http://localhost:4000/api\nVITE_API_TOKEN=${token}\n`);
+    fs.writeFileSync(frontendEnv, `VITE_API_BASE_URL=http://localhost:5871/api\nVITE_API_TOKEN=${token}\n`);
   }
   console.log('Created backend/.env and frontend/.env. Edit DATABASE_URL in backend/.env to match your PostgreSQL password.');
 }

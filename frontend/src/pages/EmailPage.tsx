@@ -33,7 +33,7 @@ export function EmailPage() {
                 <p className="font-medium">Gmail OAuth client not configured</p>
                 <ol className="mt-1 list-decimal space-y-0.5 pl-5">
                   <li>In Google Cloud Console create an OAuth client (type: Web application) and enable the Gmail API.</li>
-                  <li>Add redirect URI <code className="rounded bg-amber-100 px-1">http://localhost:4000/api/email/oauth/callback</code>.</li>
+                  <li>Add redirect URI <code className="rounded bg-amber-100 px-1">http://localhost:5871/api/email/oauth/callback</code>.</li>
                   <li>Put the client ID and secret in <code className="rounded bg-amber-100 px-1">backend/.env</code> (GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET) and restart the backend.</li>
                 </ol>
               </div>

@@ -3,6 +3,18 @@
 Everything runs on your own computer. Follow the steps in order; each has a check so you know it worked.
 Time needed: about 30 minutes, most of it downloading the AI model.
 
+## Ports
+
+| What | Port | Change it with |
+|---|---|---|
+| App (browser) | **5870** | `port` in `frontend/vite.config.ts`, and `FRONTEND_URL` in `backend/.env` |
+| API | **5871** | `PORT` in `backend/.env`, and `VITE_API_BASE_URL` in `frontend/.env` |
+| Built-in database (Option B) | **5872** | `PGLITE_PORT` environment variable, and `DATABASE_URL` |
+| PostgreSQL (Option A) | 5432 | your PostgreSQL install |
+| Ollama | 11434 | `OLLAMA_BASE_URL` in `backend/.env` |
+
+They are deliberately uncommon so Shortlist BOT can run all the time next to your other projects.
+
 ## 1. Install the prerequisites
 
 | Tool | Version | Get it | Check |
@@ -38,7 +50,7 @@ cd Setup
 npm install
 npm run db          # leave this window open; data is kept in Setup/pgdata
 ```
-On its first start it also creates all the tables. It listens on `127.0.0.1:5432` with user `postgres`, password `postgres`, database `postgres`. It accepts one connection at a time, which is enough for one person.
+On its first start it also creates all the tables. It listens on `127.0.0.1:5872` with user `postgres`, password `postgres`, database `postgres`. It accepts one connection at a time, which is enough for one person.
 
 ## 4. Get the AI model
 
@@ -58,7 +70,7 @@ npm run init-env
 `init-env` creates `backend/.env` and `frontend/.env` with fresh random secrets. Then open `backend/.env` and set `DATABASE_URL`:
 
 - Option A: `postgresql://postgres:YOUR_PASSWORD@localhost:5432/job_app_automation?schema=public`
-- Option B: `postgresql://postgres:postgres@127.0.0.1:5432/postgres?schema=public&connection_limit=1&sslmode=disable&pgbouncer=true`
+- Option B: `postgresql://postgres:postgres@127.0.0.1:5872/postgres?schema=public&connection_limit=1&sslmode=disable&pgbouncer=true`
 
 Create the tables and starter data:
 ```bash
@@ -78,7 +90,7 @@ cd backend && npm run start:dev
 # terminal 2
 cd frontend && npm install && npm run dev
 ```
-Open **http://localhost:3000**. Use `localhost`, not `127.0.0.1` (CORS only allows the configured address).
+Open **http://localhost:5870**. Use `localhost`, not `127.0.0.1` (CORS only allows the configured address).
 
 Check: the sidebar's System box shows Backend, Database and Ollama with green dots, and the **App health** page says everything is running.
 
@@ -96,7 +108,7 @@ You create your own free Google OAuth client, so nobody else ever holds access t
 1. https://console.cloud.google.com, create a project, and enable the **Gmail API**.
 2. **Google Auth Platform**: configure the consent screen, choose **External**, and add your Gmail address under **Audience, Test users**.
 3. **Clients, Create client**: type **Web application**, authorized redirect URI
-   `http://localhost:4000/api/email/oauth/callback`. Copy the client ID and secret.
+   `http://localhost:5871/api/email/oauth/callback`. Copy the client ID and secret.
 4. Put them in `backend/.env`:
    ```
    GMAIL_CLIENT_ID=...
@@ -121,17 +133,17 @@ git pull
 cd backend  && npm install && npm run db:deploy     # applies any new database migrations
 cd ../frontend && npm install
 ```
-Read [CHANGELOG.md](CHANGELOG.md) first. The current version is in the `VERSION` file.
+Read [CHANGELOG.md](CHANGELOG.md) first; a release can ask you to change your `.env` files. The current version is in the `VERSION` file.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Sidebar shows "Backend unreachable" | Start the backend; check port 4000 is free. |
+| Sidebar shows "Backend unreachable" | Start the backend; check port 5871 is free. |
 | Database dot is red | Start PostgreSQL (or `npm run db` in `Setup`) and re-check `DATABASE_URL`. |
 | Ollama dot is red | Start Ollama and run `ollama pull qwen3:8b`. |
 | Jobs stay "New" | The model was unavailable. Fix it, then click **Retry unanalyzed jobs** on the Jobs page. |
-| Page is blank or "Cannot reach the backend" | Open the app at `http://localhost:3000`, not `127.0.0.1`. |
+| Page is blank or "Cannot reach the backend" | Open the app at `http://localhost:5870`, not `127.0.0.1`. |
 | "Application Control policy has blocked this file" (Windows) | Your machine blocks unsigned programs. Use Option B for the database. The frontend uses WebAssembly builds of its bundler for the same reason. |
 | Gmail says `access_denied` | Add your address as a test user in the Google consent screen. |
 | Gmail worked, then stopped after a week | Testing-mode apps expire after 7 days. Click **Connect Gmail** again. |
