@@ -17,7 +17,7 @@ CI runs the same checks on every push and pull request.
 - **Add tests** for backend logic (scoring, dedup, validation, status rules). Pure functions are easy to test; see `backend/src/__tests__`.
 - **Keep prompts in** `backend/src/modules/ai/prompts/` and keep business code independent of Ollama (use the `AIProvider` interface). The same goes for email (`EmailProvider`) and job sources (`JobSource`).
 - **Never call a job site aggressively.** New sources must be rate limited, stop on HTTP 429, and must not log in, bypass CAPTCHAs or scrape private data.
-- **Never send an application automatically.** Sending always needs an explicit user confirmation.
+- **Sending must stay safe.** Sending needs an explicit confirmation, except Auto-apply, which must stay off by default and pass every rule in `auto-apply.service.ts` (and be tested).
 - **No secrets in commits.** `.env` files and Google `client_secret*.json` are ignored; double check `git status` before committing.
 - **UI:** keep it plain and readable, follow the existing tokens in `frontend/tailwind.config.js`, support keyboard use, and respect reduced motion.
 

@@ -1,6 +1,7 @@
 import { JobType } from '@prisma/client';
 import { containsTerm } from '../../common/utils/normalize';
 import { Thresholds } from '../settings/settings.service';
+import { cleanMissingSkills } from './skill-text';
 
 export interface ScoreInput {
   job: { title: string; description: string; location?: string | null; jobType?: JobType | null };
@@ -54,12 +55,13 @@ export function calculateScore(i: ScoreInput): ScoreResult {
   const text = `${i.job.title}\n${i.job.description}`;
   const cvSkills = i.cv?.skills ?? [];
   const matchedSkills = cvSkills.filter((s) => containsTerm(text, s));
-  const cvSkillSet = new Set(cvSkills.map((s) => s.toLowerCase()));
-  // The model may only report a skill as missing if the job text really mentions it.
-  const missingSkills = [...new Set(i.ai.missingSkills)].filter((s) => !cvSkillSet.has(s.toLowerCase()) && containsTerm(text, s));
+  // Missing skills: only what the ad really mentions, not already on the CV, no filler, no duplicates.
+  const missingSkills = cleanMissingSkills(i.ai.missingSkills, cvSkills, text);
 
-  const denom = matchedSkills.length + missingSkills.length;
-  const skills = !i.cv ? 0 : denom === 0 ? 0.5 : matchedSkills.length / denom;
+  // With very few named skills the ratio is unreliable (1 of 1 would be a free 100%), so pull it toward neutral.
+  const evidence = matchedSkills.length + missingSkills.length;
+  const pseudo = Math.max(0, 4 - evidence);
+  const skills = !i.cv ? 0 : evidence === 0 ? 0.5 : (matchedSkills.length + 0.5 * pseudo) / (evidence + pseudo);
 
   const title = titleMatch(i.job.title, [...i.constraints.keywords, ...(i.cv?.preferredJobKeywords ?? [])]);
 
@@ -68,8 +70,8 @@ export function calculateScore(i: ScoreInput): ScoreResult {
   let experience = i.ai.experienceCompatible ? 1 : 0.3;
   if (requiredYears !== null && i.candidateYears !== null) {
     const gap = requiredYears - i.candidateYears;
-    experienceCompatible = gap <= 1;
-    experience = gap <= 0 ? 1 : gap <= 1 ? 0.8 : clamp01(1 - gap / 5);
+    experienceCompatible = gap <= 0;                         // even one year short is a stretch, not a fit
+    experience = gap <= 0 ? 1 : Math.max(0.1, 1 - 0.4 * gap); // 1 yr short = 0.6, 2 = 0.2
   }
 
   let locationCompatible = i.ai.locationCompatible;
@@ -112,9 +114,15 @@ export function scoreLabel(score: number, t: Thresholds): ScoreLabel {
 }
 
 /** Recommendation is derived from the score (not the LLM): APPLY at "good"+, MAYBE at "possible". */
-export function recommendationFor(score: number, t: Thresholds, excludedHits: string[]): 'APPLY' | 'MAYBE' | 'SKIP' {
+export function recommendationFor(
+  score: number,
+  t: Thresholds,
+  excludedHits: string[],
+  ai?: { recommendation: string },
+): 'APPLY' | 'MAYBE' | 'SKIP' {
   if (excludedHits.length && score < t.strong[0]) return 'SKIP';
-  if (score >= t.good[0]) return 'APPLY';
+  // The model strongly advised against it: never an automatic APPLY, a person should look first.
+  if (score >= t.good[0]) return ai?.recommendation === 'SKIP' ? 'MAYBE' : 'APPLY';
   if (score >= t.possible[0]) return 'MAYBE';
   return 'SKIP';
 }

@@ -9,6 +9,7 @@ import { cvMatchSchema, JobAnalysisOutput, jobAnalysisSchema } from '../ai/schem
 import { ApplicationsService } from '../applications/applications.service';
 import { SettingsService } from '../settings/settings.service';
 import { CvCandidate, selectCv } from './cv-selection';
+import { buildReason } from './reason';
 import { calculateScore, recommendationFor } from './scoring';
 
 /** Calls the model and strictly validates the result; retries once on malformed output. */
@@ -83,9 +84,13 @@ export class AnalysisService {
         job: { ...jobText, location: job.location, jobType: job.jobType }, cv, constraints,
         ai, candidateYears: candidate.yearsExperience, cvRelevance: pick.relevance,
       });
-      const recommendation = recommendationFor(result.score, thresholds, result.excludedHits);
-      const reason = [ai.reason, !cv ? 'No enabled CV profile available.' : '', result.excludedHits.length ? `Excluded keyword(s): ${result.excludedHits.join(', ')}.` : '']
-        .filter(Boolean).join(' ');
+      const recommendation = recommendationFor(result.score, thresholds, result.excludedHits, ai);
+      const reason = buildReason({
+        score: result.score, recommendation, hasCv: !!cv, matched: result.matchedSkills, missing: result.missingSkills,
+        requiredYears: result.experienceRequiredYears, candidateYears: candidate.yearsExperience,
+        experienceCompatible: result.experienceCompatible, locationCompatible: result.locationCompatible,
+        excludedHits: result.excludedHits, ai: { recommendation: ai.recommendation, matchScore: ai.matchScore, reason: ai.reason },
+      });
 
       const data = {
         category: ai.category, aiMatchScore: ai.matchScore, finalMatchScore: result.score, recommendedCvId: cv?.id ?? null,

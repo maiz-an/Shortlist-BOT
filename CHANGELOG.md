@@ -3,6 +3,29 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.2.0] - 2026-09-22
+
+### Added
+- **Auto-apply** switch in Settings, **off by default**. When on, a new job is emailed automatically only if every safety rule passes: recommendation Apply and score at or above your threshold (default 80%), an application email on the job, a CV file, Gmail connected, an email written by the AI (never the fallback template), and under a daily limit (default 10). Off means nothing is ever sent by itself.
+- **Phone / remote access (experimental, not yet verified end to end).** Optional passcode login (`ACCESS_PASSCODE`), a same-origin `/api` proxy so any device can use the app, and `start.cmd remote` / `./start.sh remote`. Remote start refuses to run without a passcode. Recommended: Tailscale (see SETUP.md). Do not put the app on the public internet.
+- Start/stop scripts for Windows (`start.cmd`, `stop.cmd`, `create-shortcuts.cmd`, `autostart-on/off.cmd`) and macOS/Linux (`start.sh`, `stop.sh`). Everything runs **hidden**: no console windows, no taskbar entries.
+- Settings is organized into tabs (Profile, Auto-apply, Matching, Automatic search, System). The app version now lives in Settings, About.
+- "a Maiz's one" watermark on the splash screen and sidebar.
+- Read-only Database browser and App health page (from 1.1.x) now sit before Settings in the sidebar.
+
+### Changed
+- **Better scoring.**
+  - Missing skills are cleaned (dropped when already on your CV, vague, or duplicated) and capped at 12; real gaps worded differently from the ad are now recognised.
+  - An ad naming only one or two skills no longer earns a free 100% skills score.
+  - Being one year short of the required experience is a stretch, not a fit.
+  - A strong AI "SKIP" can no longer become an automatic Apply.
+  - The reason text is built from the real numbers and says when the AI disagreed.
+- AI answers where a skill list arrives as one text string are repaired instead of failing the analysis.
+- `VITE_API_BASE_URL` now defaults to empty (same-origin). Existing `frontend/.env` files with an absolute URL keep working.
+
+### Upgrading from 1.1.x
+Nothing is required. To use a phone, set `ACCESS_PASSCODE` in `backend/.env` (see SETUP.md). Jobs analysed before this version keep their old scores until you re-run the analysis.
+
 ## [1.1.1] - 2026-09-21
 
 Repository housekeeping. No change to how the app behaves.

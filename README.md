@@ -1,8 +1,8 @@
 # Shortlist BOT
 
-**A local-first job application assistant.** It finds jobs, removes duplicates, reads each one with a local AI model, picks the right CV, drafts the email, and lets you review and send it from your own Gmail. Everything runs on your computer. No paid APIs, no cloud, nothing is sent without your click.
+**A local-first job application assistant.** It finds jobs, removes duplicates, reads each one with a local AI model, picks the right CV, drafts the email, and lets you review and send it from your own Gmail. Everything runs on your computer. No paid APIs, no cloud, nothing is sent without your say-so (auto-apply is off unless you turn it on).
 
-![version](https://img.shields.io/badge/version-1.1.1-265496)
+![version](https://img.shields.io/badge/version-1.2.0-265496)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 ![CI](https://github.com/maiz-an/Shortlist-BOT/actions/workflows/ci.yml/badge.svg)
@@ -21,7 +21,8 @@ Find job  →  Analyze  →  Pick CV  →  Draft email  →  You review  →  Se
 - **Draft honest emails** that only claim skills present on the selected CV, then edit before sending.
 - **Send through your Gmail** with OAuth (send-only permission, tokens encrypted). A confirmation dialog shows recipient, subject, body and attachment first.
 - **Track** every application: status workflow and history, notes, follow-up and interview dates.
-- **Automate** searches on a schedule. Applications are never sent automatically.
+- **Automate** searches on a schedule. Auto-apply is **off by default**; if you turn it on it only sends when strict safety rules all pass (see Settings).
+- **Use it on your phone** (experimental): passcode login and a private Tailscale address. See [SETUP.md](SETUP.md#use-it-from-your-phone).
 - **See everything**: dashboard, an **App health** page (frontend, backend, database, AI model, Gmail, with fixes), and a read-only **Database** browser with CSV/JSON export.
 
 ## Quick start
@@ -92,3 +93,6 @@ Shortlist BOT reads publicly visible listings gently (rate limited, stops on HTT
 ## License
 
 [MIT](LICENSE)
+
+---
+<sub><i>a Maiz's one</i></sub>

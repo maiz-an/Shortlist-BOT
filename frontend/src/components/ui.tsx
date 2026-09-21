@@ -144,6 +144,25 @@ export function Notice({ tone = 'info', children, action }: PropsWithChildren<{ 
   );
 }
 
+/** On/off switch (role="switch"). Slides with a spring; keyboard accessible. */
+export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cx('relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50',
+        checked ? 'border-emerald-700 bg-emerald-600' : 'border-slate-300 bg-slate-200')}
+    >
+      <motion.span
+        className="absolute left-0.5 h-5.5 w-5.5 rounded-full bg-white shadow"
+        style={{ height: 22, width: 22 }}
+        animate={{ x: checked ? 20 : 0 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+      />
+    </button>
+  );
+}
+
 /* ---------- Badges & score ---------- */
 const STATUS_STYLES: Record<JobStatus, string> = {
   NEW: 'bg-slate-100 text-slate-700', ANALYZING: 'bg-sky-100 text-sky-700', ANALYZED: 'bg-blue-100 text-blue-700',

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { AIProvider, AIUnavailableError } from '../modules/ai/ai-provider';
 import { extractJson, InvalidAIOutputError, parseAIOutput } from '../modules/ai/json-output';
-import { jobAnalysisSchema } from '../modules/ai/schemas';
+import { jobAnalysisSchema, toSkillList } from '../modules/ai/schemas';
 import { runAiAnalysis } from '../modules/job-analysis/analysis.service';
 import { assertManualTransition } from '../modules/applications/status-rules';
 import { ApplicationsService } from '../modules/applications/applications.service';
@@ -38,13 +38,24 @@ describe('AI JSON validation', () => {
     const out = parseAIOutput(JSON.stringify(validAnalysis), jobAnalysisSchema);
     expect(out).toMatchObject({ category: 'FULL_STACK', matchScore: 91, applicationMethod: 'EMAIL', recommendation: 'APPLY', locationCompatible: true });
   });
+  it('repairs list slips from small models but still rejects wrong types', () => {
+    expect(toSkillList('AWS, Docker; Kubernetes')).toEqual(['AWS', 'Docker', 'Kubernetes']);
+    expect(toSkillList('None')).toEqual([]);
+    expect(toSkillList(['  React ', '', 'N/A'])).toEqual(['React']);
+    expect(toSkillList('x'.repeat(200) as string)).toEqual(['x'.repeat(80)]);
+    expect(toSkillList(null)).toEqual([]);
+    const out = parseAIOutput(JSON.stringify({ ...validAnalysis, missingSkills: 'AWS, Terraform', matchedSkills: 'None' }), jobAnalysisSchema);
+    expect(out.missingSkills).toEqual(['AWS', 'Terraform']);
+    expect(out.matchedSkills).toEqual([]);
+    expect(() => parseAIOutput(JSON.stringify({ ...validAnalysis, missingSkills: { a: 1 } }), jobAnalysisSchema)).toThrow(InvalidAIOutputError);
+    expect(() => parseAIOutput(JSON.stringify({ ...validAnalysis, missingSkills: [1, 2] }), jobAnalysisSchema)).toThrow(InvalidAIOutputError);
+  });
   it.each([
     ['no json', 'I cannot help with that'],
     ['truncated', '{"category": "X", "matchScore": 5'],
     ['score out of range', JSON.stringify({ ...validAnalysis, matchScore: 250 })],
     ['bad enum', JSON.stringify({ ...validAnalysis, recommendation: 'DEFINITELY' })],
     ['missing field', JSON.stringify({ ...validAnalysis, experienceCompatible: undefined })],
-    ['wrong type', JSON.stringify({ ...validAnalysis, matchedSkills: 'React' })],
   ])('rejects malformed output: %s', (_n, raw) => {
     expect(() => parseAIOutput(raw, jobAnalysisSchema)).toThrow(InvalidAIOutputError);
   });

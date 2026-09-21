@@ -4,6 +4,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ApiTokenGuard } from './common/guards/api-token.guard';
+import { AuthModule } from './modules/auth/auth.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ApplicationsModule } from './modules/applications/applications.controller';
 import { CvProfilesModule } from './modules/cv-profiles/cv-profiles.controller';
@@ -22,6 +23,7 @@ import { PrismaModule } from './prisma/prisma.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     PrismaModule,
+    AuthModule,
     AiModule,
     SettingsModule,
     CvProfilesModule,

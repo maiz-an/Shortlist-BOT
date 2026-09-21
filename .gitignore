@@ -22,3 +22,8 @@ Setup/Ollama/
 .claude/
 
 .DS_Store
+logs/
+.run/
+
+# personal documents - never commit
+CV/

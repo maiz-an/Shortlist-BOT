@@ -19,6 +19,11 @@ const schemas: Record<SettingKey, z.ZodTypeAny> = {
     summary: z.string().max(2000),
     experience: z.string().max(6000),
   }),
+  auto_apply: z.object({
+    enabled: z.boolean(),
+    minScore: z.number().int().min(50).max(100),
+    dailyLimit: z.number().int().min(1).max(50),
+  }),
   pipeline: z.object({
     defaultMinScore: z.number().int().min(0).max(100),
     fetchDescriptions: z.boolean(),

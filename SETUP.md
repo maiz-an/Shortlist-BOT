@@ -3,6 +3,17 @@
 Everything runs on your own computer. Follow the steps in order; each has a check so you know it worked.
 Time needed: about 30 minutes, most of it downloading the AI model.
 
+## Use it from your phone
+
+The app is private to your computer by default. To reach it from your phone (experimental, not yet verified end to end):
+
+1. **Set a login.** In `backend/.env` set `ACCESS_PASSCODE=` to a long passphrase. Without it, remote start refuses to run, because anyone who could reach the app could use your Gmail.
+2. **Give your laptop a permanent private address with [Tailscale](https://tailscale.com)** (free): install it on the laptop and the phone, sign in to the same account, then note the laptop's `100.x.y.z` address (`tailscale ip -4`). It works from anywhere and is not reachable by anyone else.
+3. **Start in remote mode:** `start.cmd remote` (Windows) or `./start.sh remote`. It prints the addresses to use.
+4. On the phone open `http://100.x.y.z:5870` and enter your passcode.
+
+Notes: the laptop must be awake. A temporary public tunnel link is possible but not recommended; if you use one, the passcode is your only protection. Never open ports on your router.
+
 ## Ports
 
 | What | Port | Change it with |
@@ -118,8 +129,22 @@ You create your own free Google OAuth client, so nobody else ever holds access t
 
 Only the permission to send email is requested. While the app is in Google's Testing mode the connection expires after 7 days; just reconnect.
 
-## Everyday use
+## Everyday use (Windows)
 
+Everything runs **hidden in the background**: no console windows, nothing in the taskbar.
+
+| Do this | To |
+|---|---|
+| Double-click `create-shortcuts.cmd` once | Put **Shortlist BOT** and **Stop Shortlist BOT** shortcuts on your Desktop. Starting is then one click; the app opens in your browser. |
+| Double-click `start.cmd` | Start everything (shows progress in a window that closes itself), then open the app |
+| Double-click `stop.cmd` | Stop the app, API and built-in database (Ollama is left running; `stop.cmd all` stops it too) |
+| Double-click `autostart-on.cmd` | Start quietly every time you sign in to Windows. `autostart-off.cmd` turns it off. |
+
+Logs are written to the `logs` folder. If something fails to start, a message box tells you why.
+
+On macOS/Linux use `./start.sh` and `./stop.sh` (they also run in the background; add `remote` to allow your phone).
+
+Manual start (for development):
 ```bash
 # Option B only, first:  cd Setup && npm run db
 cd backend  && npm run start:dev

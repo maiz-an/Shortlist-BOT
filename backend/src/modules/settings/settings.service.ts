@@ -25,6 +25,12 @@ export interface CandidateSettings {
   experience: string;
 }
 
+export interface AutoApplySettings {
+  enabled: boolean;
+  minScore: number;
+  dailyLimit: number;
+}
+
 export const SETTING_DEFAULTS = {
   match_score_thresholds: {
     poor: [0, 49],
@@ -35,6 +41,7 @@ export const SETTING_DEFAULTS = {
   } as Thresholds,
   scheduler: { enabled: false, intervalHours: 6, profileIds: [], sourceKeys: [] } as SchedulerSettings,
   candidate: { name: '', email: '', phone: '', yearsExperience: null, summary: '', experience: '' } as CandidateSettings,
+  auto_apply: { enabled: false, minScore: 80, dailyLimit: 10 } as AutoApplySettings,
   pipeline: { defaultMinScore: 50, fetchDescriptions: true, maxDescriptionFetches: 25 },
 };
 

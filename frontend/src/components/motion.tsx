@@ -36,6 +36,15 @@ export function Wordmark({ className = '', tag = true }: { className?: string; t
   );
 }
 
+/** Signature shown on the splash, sidebar and login screen. */
+export function Watermark({ className = '', }: { className?: string; version?: string }) {
+  return (
+    <p className={`font-display text-xs italic text-slate-400 ${className}`}>
+      - a Maiz&apos;s one -
+    </p>
+  );
+}
+
 /** Route content fades and rises slightly on navigation. */
 export function PageTransition({ children }: PropsWithChildren) {
   const reduce = useReducedMotion();

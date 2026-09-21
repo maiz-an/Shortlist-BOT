@@ -1,6 +1,21 @@
 import { z } from 'zod';
 
-const strList = z.array(z.string().trim().min(1).max(80)).max(50).default([]);
+/**
+ * Small models often return a list as one comma-separated string, "None", or an over-long entry.
+ * Repair exactly those slips; anything else that is not a list of strings still fails validation.
+ */
+export function toSkillList(v: unknown): unknown {
+  if (v === null || v === undefined) return [];
+  const raw = Array.isArray(v) ? v : typeof v === 'string' ? v.split(/[,;\n]/) : v;
+  if (!Array.isArray(raw)) return v;
+  return raw
+    .map((x) => (typeof x === 'string' ? x.trim() : x))
+    .filter((x) => x !== '' && !(typeof x === 'string' && /^(none|n\/a|na|nil|null|no missing skills?)\.?$/i.test(x)))
+    .map((x) => (typeof x === 'string' ? x.slice(0, 80) : x))
+    .slice(0, 50);
+}
+
+const strList = z.preprocess(toSkillList, z.array(z.string().min(1).max(80)).max(50));
 const bool = z.union([z.boolean(), z.enum(['true', 'false']).transform((v) => v === 'true')]);
 
 export const jobAnalysisSchema = z.object({

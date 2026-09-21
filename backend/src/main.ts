@@ -18,9 +18,10 @@ async function bootstrap() {
     origin: config.get<string>('FRONTEND_URL', 'http://localhost:5870').split(',').map((s) => s.trim()),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-Api-Token'],
+    credentials: true,
   });
 
-  if (!config.get('API_TOKEN')) logger.warn('API_TOKEN is not set: the local API is unauthenticated', 'Bootstrap');
+  if (!config.get('API_TOKEN') && !config.get('ACCESS_PASSCODE')) logger.warn('API_TOKEN is not set: the local API is unauthenticated', 'Bootstrap');
   if (!config.get('TOKEN_ENCRYPTION_KEY')) logger.warn('TOKEN_ENCRYPTION_KEY is not set: Gmail cannot be connected', 'Bootstrap');
 
   const port = Number(config.get('PORT', 5871));

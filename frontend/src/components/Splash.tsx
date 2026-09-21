@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { LogoMark } from './motion';
+import { LogoMark, Watermark } from './motion';
 
 const KEY = 'shortlist.splash';
 const seen = () => {
@@ -46,6 +46,9 @@ export function Splash() {
           <motion.p className="mt-2 text-sm text-slate-500" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.5 }}>
             Your job search assistant.
           </motion.p>
+          <motion.div className="absolute bottom-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.6 }}>
+            <Watermark />
+          </motion.div>
           <motion.div className="absolute bottom-16 h-0.5 w-28 overflow-hidden rounded bg-slate-200" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
             <motion.div className="h-full bg-brand-600" initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 1.5, ease: 'easeInOut' }} />
           </motion.div>

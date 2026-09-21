@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Module, Param, ParseUUIDPipe, Post } f
 import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ApplicationsModule } from '../applications/applications.controller';
+import { EmailModule } from '../email/email.module';
 import { JobsModule } from '../jobs/jobs.controller';
 import { JobsService } from '../jobs/jobs.service';
 import { SettingsModule } from '../settings/settings.controller';
@@ -64,7 +65,7 @@ export class JobAnalysisController {
 }
 
 @Module({
-  imports: [JobsModule, ApplicationsModule, SettingsModule],
+  imports: [JobsModule, ApplicationsModule, SettingsModule, EmailModule],
   controllers: [JobAnalysisController],
   providers: [AnalysisService, AnalysisQueue],
   exports: [AnalysisQueue, AnalysisService],

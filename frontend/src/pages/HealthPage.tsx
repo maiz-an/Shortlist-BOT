@@ -7,7 +7,6 @@ import type { CheckStatus } from '../features/health/api';
 import { Item, Stagger } from '../components/motion';
 import { Badge, Card, ErrorState, Loading, PageHeader, cx } from '../components/ui';
 
-const APP_VERSION = '1.1.1';
 
 function useTicker(ms = 1000) {
   const [, set] = useState(0);
@@ -107,7 +106,6 @@ export function HealthPage() {
               <Row label="API round trip"><span className={latencyTone(data.clientLatencyMs)}>{data.clientLatencyMs} ms</span></Row>
               <Row label="Browser">{navigator.onLine ? 'Online' : 'Offline'}</Row>
               <Row label="Memory">{heap ? `${Math.round(heap.usedJSHeapSize / 1048576)} MB` : 'Not reported'}</Row>
-              <Row label="Version">{APP_VERSION} ({import.meta.env.MODE})</Row>
             </dl>
           </Card>
 

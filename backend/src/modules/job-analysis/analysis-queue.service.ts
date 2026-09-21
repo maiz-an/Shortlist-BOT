@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AIUnavailableError } from '../ai/ai-provider';
+import { AutoApplyService } from '../email/auto-apply.service';
 import { AnalysisService } from './analysis.service';
 
 /** Sequential in-process queue: the local LLM handles one job at a time. */
@@ -12,7 +13,11 @@ export class AnalysisQueue implements OnApplicationBootstrap {
   private current: string | null = null;
   private lastError: string | null = null;
 
-  constructor(private readonly analysis: AnalysisService, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly analysis: AnalysisService,
+    private readonly prisma: PrismaService,
+    private readonly autoApply: AutoApplyService,
+  ) {}
 
   async onApplicationBootstrap() {
     // Resume anything left unanalyzed by a previous run.
@@ -41,8 +46,12 @@ export class AnalysisQueue implements OnApplicationBootstrap {
         const id = this.queue.shift()!;
         this.current = id;
         try {
+          const before = await this.prisma.job.findUnique({ where: { id }, select: { status: true } });
           await this.analysis.analyze(id);
           this.lastError = null;
+          // Only a job that just moved into REVIEW may be auto-applied; re-analysing one you already handle never sends.
+          const after = await this.prisma.job.findUnique({ where: { id }, select: { status: true } });
+          if (before?.status !== 'REVIEW' && after?.status === 'REVIEW') await this.autoApply.maybeApply(id);
         } catch (err) {
           this.lastError = (err as Error).message;
           if (err instanceof AIUnavailableError) {

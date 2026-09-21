@@ -8,6 +8,7 @@ import { ApplicationsModule } from '../applications/applications.controller';
 import { CvProfilesModule } from '../cv-profiles/cv-profiles.controller';
 import { SettingsModule } from '../settings/settings.controller';
 import { EMAIL_PROVIDER, EmailAuthError, EmailProvider } from './email-provider';
+import { AutoApplyService } from './auto-apply.service';
 import { EmailGenerationService } from './email-generation.service';
 import { EmailSendService } from './email-send.service';
 import { GmailProvider } from './gmail.provider';
@@ -95,6 +96,7 @@ export class EmailController {
 @Module({
   imports: [ApplicationsModule, CvProfilesModule, SettingsModule],
   controllers: [EmailController],
-  providers: [GmailProvider, { provide: EMAIL_PROVIDER, useExisting: GmailProvider }, EmailGenerationService, EmailSendService],
+  providers: [GmailProvider, { provide: EMAIL_PROVIDER, useExisting: GmailProvider }, EmailGenerationService, EmailSendService, AutoApplyService],
+  exports: [AutoApplyService],
 })
 export class EmailModule {}

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'framer-motion';
-import { Briefcase, Database, FileText, HeartPulse, LayoutDashboard, Mail, Menu, Plug, Search, Send, Settings, X } from 'lucide-react';
+import { Briefcase, Database, LogOut, FileText, HeartPulse, LayoutDashboard, Mail, Menu, Plug, Search, Send, Settings, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiClient } from '../services/api-client';
 import { useAiStatus } from '../features/settings/api';
+import { useAuthStatus, useLogout } from '../features/auth/Auth';
 import { cx } from './ui';
-import { LogoMark, PageTransition, Wordmark } from './motion';
+import { LogoMark, PageTransition, Watermark, Wordmark } from './motion';
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,9 +18,9 @@ const NAV: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/cvs', label: 'CV profiles', icon: FileText },
   { to: '/email', label: 'Email', icon: Mail },
   { to: '/sources', label: 'Sources', icon: Plug },
-  { to: '/settings', label: 'Settings', icon: Settings },
   { to: '/health', label: 'App health', icon: HeartPulse },
   { to: '/database', label: 'Database', icon: Database },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 /** Small, distinct gesture per icon, played when its item is clicked. */
@@ -81,6 +82,8 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     refetchInterval: 30000,
   });
   const ai = useAiStatus();
+  const auth = useAuthStatus();
+  const logout = useLogout();
   return (
     <div className="flex h-full flex-col">
       <div className="mb-6 flex items-center gap-2.5 px-3"><LogoMark size={26} /><Wordmark /></div>
@@ -94,6 +97,12 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <StatusRow ok={ai.data?.ok} label={ai.data ? `Ollama · ${ai.data.model}` : 'Ollama'} detail={ai.data?.detail} />
         </ul>
       </Link>
+      {auth.data?.required && (
+        <button onClick={() => logout.mutate()} className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-left text-xs text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+          <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />Lock this device
+        </button>
+      )}
+      <Watermark className="mt-3 px-3" />
     </div>
   );
 }
