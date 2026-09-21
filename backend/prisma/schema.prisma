@@ -1,0 +1,375 @@
+// Phase 2: full relational schema.
+// Covers section 18 of the spec: User, CVProfile, JobSearchProfile, JobSource,
+// Job, JobSourceListing, JobAnalysis, Application, EmailDraft, EmailMessage,
+// ApplicationStatusHistory, SearchRun, SystemSetting.
+//
+// Conventions:
+// - UUID primary keys everywhere.
+// - createdAt/updatedAt timestamps on every model.
+// - Enums used for closed, spec-defined vocabularies (job status, recommendation,
+//   remote preference, etc). Open-ended user-defined vocabularies (CV categories,
+//   job categories, excluded/preferred keyword lists) are left as String / String[]
+//   so new search profiles or CV categories don't require a migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+  UNKNOWN
+}
+
+enum RemotePreference {
+  REMOTE
+  ON_SITE
+  HYBRID
+  ANY
+}
+
+enum DatePostedFilter {
+  PAST_24_HOURS
+  PAST_WEEK
+  PAST_MONTH
+  ANY_TIME
+}
+
+enum JobStatus {
+  NEW
+  ANALYZING
+  ANALYZED
+  REVIEW
+  APPROVED
+  SENDING
+  APPLIED
+  REJECTED
+  WITHDRAWN
+  INTERVIEW
+  OFFER
+  CLOSED
+}
+
+enum ApplicationMethod {
+  EMAIL
+  WEBSITE
+  UNKNOWN
+}
+
+enum Recommendation {
+  APPLY
+  MAYBE
+  SKIP
+}
+
+enum EmailProviderType {
+  GMAIL
+}
+
+enum SearchRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+// ---------------------------------------------------------------------------
+// Core models
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cvProfiles        CVProfile[]
+  jobSearchProfiles JobSearchProfile[]
+  emailAccounts     EmailAccount[]
+}
+
+model CVProfile {
+  id                   String   @id @default(uuid())
+  name                 String
+  description          String?
+  category             String
+  filePath             String?
+  originalFileName     String?
+  enabled              Boolean  @default(true)
+  skills               String[]
+  preferredJobKeywords String[]
+  excludedKeywords     String[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  jobAnalyses  JobAnalysis[]
+  applications Application[]
+
+  @@index([category])
+  @@index([enabled])
+}
+
+model JobSearchProfile {
+  id                  String           @id @default(uuid())
+  name                String
+  keywords            String[]
+  location             String?
+  minMatchScore        Int              @default(50)
+  excludedKeywords     String[]
+  preferredJobTypes    JobType[]
+  preferredLocations   String[]
+  remotePreference     RemotePreference @default(ANY)
+  datePosted           DatePostedFilter @default(PAST_WEEK)
+  experienceLevel      String?
+  sortBy               String           @default("recent")
+  maxPages             Int              @default(1)
+  enabled              Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  sources    JobSource[] @relation("ProfileSources")
+  searchRuns SearchRun[]
+
+  @@index([enabled])
+}
+
+model JobSource {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g. "linkedin", "indeed", "bayt"
+  name        String
+  enabled     Boolean  @default(true)
+  rateLimitMs Int      @default(2000)
+  config      Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profiles JobSearchProfile[] @relation("ProfileSources")
+  listings JobSourceListing[]
+
+  @@index([enabled])
+}
+
+model Job {
+  id                  String    @id @default(uuid())
+  title               String
+  normalizedTitle     String
+  company             String
+  normalizedCompany   String
+  location            String?
+  normalizedLocation  String?
+  description         String
+  jobUrl              String?   @unique
+  jobType             JobType?
+  applicationEmail    String?
+  isManual            Boolean   @default(false)
+  analysisError       String?
+  postedAt            DateTime?
+  status              JobStatus @default(NEW)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  sourceListings JobSourceListing[]
+  analysis       JobAnalysis?
+  application    Application?
+
+  @@index([jobUrl])
+  @@index([company])
+  @@index([normalizedTitle])
+  @@index([status])
+  @@index([createdAt])
+  @@index([postedAt])
+}
+
+// Links a Job to the source(s) it was found on, with the source's own ID for
+// that listing. A single Job can have multiple JobSourceListing rows if the
+// dedup system merges matches from more than one source.
+model JobSourceListing {
+  id          String    @id @default(uuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobSourceId String
+  jobSource   JobSource @relation(fields: [jobSourceId], references: [id], onDelete: Cascade)
+  sourceJobId String? // the ID the source itself assigns, when available
+  sourceUrl   String?
+  rawData     Json? // original payload from the source, for debugging/reprocessing
+  foundAt     DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@unique([jobSourceId, sourceJobId])
+  @@index([jobId])
+  @@index([jobSourceId])
+}
+
+model JobAnalysis {
+  id     String @id @default(uuid())
+  jobId  String @unique
+  job    Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  category             String
+  aiMatchScore         Int // raw score returned by the LLM
+  finalMatchScore      Int // deterministic score computed by the backend scoring layer
+  recommendedCvId      String?
+  recommendedCv        CVProfile?        @relation(fields: [recommendedCvId], references: [id], onDelete: SetNull)
+  matchedSkills        String[]
+  missingSkills        String[]
+  experienceRequired   String?
+  experienceCompatible Boolean
+  locationCompatible   Boolean
+  salaryMentioned      Boolean           @default(false)
+  applicationMethod    ApplicationMethod @default(UNKNOWN)
+  recommendation       Recommendation
+  reason               String?
+  rawAiResponse        Json? // full AI response, kept for debugging malformed/edge-case output
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([finalMatchScore])
+  @@index([recommendation])
+}
+
+model Application {
+  id    String @id @default(uuid())
+  jobId String @unique
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  // Denormalized tracking fields (section 13) — kept alongside the Job
+  // relation so the tracker/dashboard can query Application directly
+  // without always joining back to Job.
+  company    String
+  jobTitle   String
+  location   String?
+  source     String?
+  jobUrl     String?
+  matchScore Int?
+
+  selectedCvId String?
+  selectedCv   CVProfile? @relation(fields: [selectedCvId], references: [id], onDelete: SetNull)
+
+  status        JobStatus @default(REVIEW)
+  appliedDate   DateTime?
+  notes         String?
+  followUpDate  DateTime?
+  interviewDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  emailDraft    EmailDraft?
+  emailMessages EmailMessage[]
+  statusHistory ApplicationStatusHistory[]
+
+  @@index([status])
+  @@index([matchScore])
+  @@index([createdAt])
+}
+
+// The single editable draft for an application. Overwritten in place as the
+// user edits; EmailMessage below is the immutable record of what was
+// actually sent.
+model EmailDraft {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  recipient String?
+  subject   String
+  body      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmailMessage {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  sentAt            DateTime          @default(now())
+  recipient         String
+  subject           String
+  body              String
+  selectedCvPath    String?
+  provider          EmailProviderType
+  providerMessageId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([applicationId])
+  @@index([sentAt])
+}
+
+model EmailAccount {
+  id     String  @id @default(uuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  provider              EmailProviderType
+  emailAddress          String
+  encryptedAccessToken  String?
+  encryptedRefreshToken String?
+  tokenExpiresAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, emailAddress])
+}
+
+model ApplicationStatusHistory {
+  id            String      @id @default(uuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  fromStatus JobStatus?
+  toStatus   JobStatus
+  note       String?
+  changedAt  DateTime    @default(now())
+
+  @@index([applicationId])
+}
+
+model SearchRun {
+  id                 String            @id @default(uuid())
+  jobSearchProfileId String?
+  jobSearchProfile   JobSearchProfile? @relation(fields: [jobSearchProfileId], references: [id], onDelete: SetNull)
+
+  status            SearchRunStatus @default(RUNNING)
+  startedAt         DateTime        @default(now())
+  finishedAt        DateTime?
+  jobsFound         Int             @default(0)
+  jobsNew           Int             @default(0)
+  duplicatesSkipped Int             @default(0)
+  errors            Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([startedAt])
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
