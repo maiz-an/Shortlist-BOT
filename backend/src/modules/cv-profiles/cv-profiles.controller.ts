@@ -9,9 +9,9 @@ import type { Response } from 'express';
 import { CreateCvProfileDto, UpdateCvProfileDto } from './cv-profiles.dto';
 import { CvProfilesService, MAX_CV_BYTES, MIME } from './cv-profiles.service';
 
-/** The extracted CV text stays on the server; the app only needs to know it could be read. */
-function publicCv<T extends { textContent: string | null }>(cv: T) {
-  const { textContent, ...rest } = cv;
+/** The extracted CV text and the send-PDF's internal file name stay on the server. */
+function publicCv<T extends { textContent: string | null; sendPdfPath: string | null }>(cv: T) {
+  const { textContent, sendPdfPath, ...rest } = cv;
   return { ...rest, textReadable: !!textContent };
 }
 
@@ -24,7 +24,9 @@ export class CvProfilesController {
   @Get()
   async list() {
     const rows = await this.cvs.list();
-    return Promise.all(rows.map(async (cv) => ({ ...publicCv(cv), fileExists: !!(await this.cvs.resolveFile(cv)) })));
+    return Promise.all(rows.map(async (cv) => ({
+      ...publicCv(cv), fileExists: !!(await this.cvs.resolveFile(cv)), sendPdfReady: !!(await this.cvs.resolveAttachment(cv)),
+    })));
   }
 
   @Get(':id')
@@ -48,6 +50,7 @@ export class CvProfilesController {
     await this.cvs.remove(id);
   }
 
+  /** The CV file used for analysis (scoring, emails). PDF or DOCX - whichever reads better for you. */
   @Post(':id/file')
   @UseInterceptors(upload)
   async uploadFile(@Param('id', ParseUUIDPipe) id: string, @UploadedFile() file?: Express.Multer.File) {
@@ -62,6 +65,25 @@ export class CvProfilesController {
     if (!abs) throw new NotFoundException('No CV file stored for this profile');
     res.setHeader('Content-Type', MIME[path.extname(abs)] ?? 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${(cv.originalFileName ?? path.basename(abs)).replace(/"/g, '')}"`);
+    res.sendFile(abs);
+  }
+
+  /** The PDF you upload yourself, attached to application emails instead of the analysis file. */
+  @Post(':id/send-pdf')
+  @UseInterceptors(upload)
+  async uploadSendPdf(@Param('id', ParseUUIDPipe) id: string, @UploadedFile() file?: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No file uploaded (field name: file)');
+    return publicCv(await this.cvs.saveSendPdf(id, file));
+  }
+
+  /** The exact PDF that would be attached to an application email - shown inline (never downloaded). */
+  @Get(':id/email-preview')
+  async emailPreview(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
+    const cv = await this.cvs.get(id);
+    const abs = await this.cvs.resolveAttachment(cv);
+    if (!abs) throw new NotFoundException('No PDF has been uploaded for sending yet. Upload one on the CVs page.');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
     res.sendFile(abs);
   }
 }

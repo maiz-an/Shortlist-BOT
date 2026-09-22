@@ -21,5 +21,13 @@ export function useCvMutations() {
       },
       onSuccess: done,
     }),
+    uploadSendPdf: useMutation({
+      mutationFn: (v: { id: string; file: File }) => {
+        const f = new FormData();
+        f.append('file', v.file);
+        return apiClient.upload<CvProfile>(`/cv-profiles/${v.id}/send-pdf`, f);
+      },
+      onSuccess: done,
+    }),
   };
 }

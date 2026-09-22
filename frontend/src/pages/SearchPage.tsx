@@ -4,7 +4,7 @@ import { useProfileMutations, useProfiles, useRunSearch, useSearchRuns, useSourc
 import type { ProfileInput } from '../features/search/api';
 import type { DatePosted, JobType, RemotePreference, SearchProfile } from '../types';
 import {
-  Badge, Button, Card, Chips, ConfirmDialog, EmptyState, ErrorState, Field, Input, ListInput, Loading, Modal, PageHeader, Select, TableShell, Td, Th, errMsg, fmtDateTime, useToast,
+  Badge, Button, Card, Chips, ConfirmDialog, EmptyState, ErrorState, Field, Input, ListInput, Loading, Modal, PageHeader, Select, TableShell, Td, Th, Toggle, errMsg, fmtDateTime, useToast,
 } from '../components/ui';
 
 const JOB_TYPES: JobType[] = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY'];
@@ -42,7 +42,7 @@ function ProfileForm({ initial, busy, onSave }: { initial: ProfileInput; busy: b
           {sources.data?.filter((s) => s.implemented).map((s) => <label key={s.id} className="flex items-center gap-1.5"><input type="checkbox" checked={v.sourceIds.includes(s.id)} onChange={() => setV({ ...v, sourceIds: toggle(v.sourceIds, s.id) })} />{s.name}</label>)}
         </div>
       </fieldset>
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={v.enabled} onChange={(e) => setV({ ...v, enabled: e.target.checked })} />Enabled</label>
+      <Field label="Enabled"><Toggle checked={v.enabled} onChange={(enabled) => setV({ ...v, enabled })} label="Enabled" /></Field>
       <Button type="submit" variant="primary" loading={busy}>Save profile</Button>
     </form>
   );

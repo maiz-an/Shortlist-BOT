@@ -96,7 +96,7 @@ export class ApplicationsService {
       where: { id },
       include: {
         job: { select: { id: true, description: true, applicationEmail: true } },
-        selectedCv: { select: { id: true, name: true, filePath: true, originalFileName: true } },
+        selectedCv: { select: { id: true, name: true, filePath: true, originalFileName: true, sendPdfPath: true, sendPdfOriginalFileName: true } },
         emailDraft: true,
         emailMessages: { orderBy: { sentAt: 'desc' } },
         statusHistory: { orderBy: { changedAt: 'desc' } },

@@ -51,8 +51,8 @@ export class EmailSendService {
     if (!draft.subject.trim() || !draft.body.trim()) throw new BadRequestException('Subject and body are required');
 
     if (!app.selectedCv) throw new BadRequestException('No CV selected for this application');
-    const cvPath = await this.cvs.resolveFile(app.selectedCv);
-    if (!cvPath) throw new BadRequestException(`CV file for "${app.selectedCv.name}" is missing. Upload it on the CVs page.`);
+    const cvPath = await this.cvs.resolveAttachment(app.selectedCv);
+    if (!cvPath) throw new BadRequestException(`No PDF has been uploaded for sending "${app.selectedCv.name}" yet. Upload one on the CVs page.`);
 
     const status = await this.email.status();
     if (!status.connected) throw new ConflictException('Gmail is not connected. Connect it on the Email page.');
@@ -62,10 +62,11 @@ export class EmailSendService {
     await this.apps.setStatus(app.jobId, 'SENDING');
 
     try {
-      const ext = path.extname(cvPath).toLowerCase();
+      const sendName = app.selectedCv.sendPdfOriginalFileName ?? app.selectedCv.originalFileName;
+      const base = sendName ? path.basename(sendName, path.extname(sendName)) : 'resume';
       const sent = await this.email.send({
         to, subject: draft.subject, body: draft.body,
-        attachments: [{ filename: app.selectedCv.originalFileName ?? path.basename(cvPath), path: cvPath, contentType: MIME[ext] }],
+        attachments: [{ filename: `${base || 'resume'}.pdf`, path: cvPath, contentType: MIME['.pdf'] }],
       });
       const message = await this.prisma.emailMessage.create({
         data: {

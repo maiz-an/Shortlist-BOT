@@ -2,7 +2,7 @@
 
 **A local-first job application assistant.** It finds jobs, removes duplicates, reads each one with a local AI model, picks the right CV, drafts the email, and lets you review and send it from your own Gmail. Everything runs on your computer. No paid APIs, no cloud, nothing is sent without your say-so (auto-apply is off unless you turn it on).
 
-![version](https://img.shields.io/badge/version-1.6.0-265496)
+![version](https://img.shields.io/badge/version-1.7.0-265496)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 ![CI](https://github.com/maiz-an/Shortlist-BOT/actions/workflows/ci.yml/badge.svg)
@@ -27,7 +27,18 @@ Find job  →  Analyze  →  Pick CV  →  Draft email  →  You review  →  Se
 
 ## Quick start
 
-Full walkthrough (including a no-admin database option, Ollama and Gmail): **[SETUP.md](SETUP.md)**.
+**Setting this up on a computer that has nothing installed yet?** Download or clone this repo, then run the installer for your system - it installs Node.js/Git (and, if you want it, Ollama) if they are missing, sets up the database and `.env` files, asks whether you want a cloud AI or a local one, and starts the app:
+
+```bash
+install.cmd      # Windows: double-click it, or run from a terminal
+./install.sh     # macOS / Linux: chmod +x install.sh && ./install.sh
+```
+
+Later, `update.cmd` / `./update.sh` pulls the latest version and updates everything in place (run `start.cmd` / `./start.sh` again afterwards).
+
+Full walkthrough (including a no-admin database option, Ollama and Gmail) and what each script does: **[SETUP.md](SETUP.md)**.
+
+Prefer to do it by hand:
 
 ```bash
 git clone https://github.com/maiz-an/Shortlist-BOT.git && cd Shortlist-BOT
@@ -36,7 +47,7 @@ npm run db:setup && npm run start:dev               # terminal 1
 cd ../frontend && npm install && npm run dev        # terminal 2
 ```
 
-Needs Node.js 20+, PostgreSQL (or the built-in option in `Setup/`) and Ollama with `ollama pull qwen3:8b`.
+Needs Node.js 20+, PostgreSQL (or the built-in option in `Setup/`) and Ollama with `ollama pull qwen3:8b` - or a cloud AI API key instead of Ollama (see `AI_PROVIDER` in `backend/.env.example`).
 Open **http://localhost:5870** (use `localhost`, not `127.0.0.1`).
 
 Ports are deliberately uncommon so it can run next to your other projects: app **5870**, API **5871**, built-in database **5872**. See [Ports](SETUP.md#ports).

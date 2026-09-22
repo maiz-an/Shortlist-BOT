@@ -64,3 +64,18 @@ export function useWhatsAppDisconnect() {
 export function useWhatsAppTest() {
   return useMutation({ mutationFn: (phone: string) => apiClient.post<{ ok: boolean; reason?: string }>('/whatsapp/test', { phone }) });
 }
+
+export interface UpdateCheck {
+  current: string;
+  checked: boolean;
+  latest?: string;
+  updateAvailable?: boolean;
+  releaseUrl?: string;
+  publishedAt?: string;
+  error?: string;
+}
+
+/** Only queried when the user opens the System tab or clicks Check for updates - never polls on its own. */
+export function useUpdateCheck(enabled: boolean) {
+  return useQuery({ queryKey: ['system', 'update-check'], queryFn: () => apiClient.get<UpdateCheck>('/system/update-check'), enabled, staleTime: 60 * 60 * 1000 });
+}

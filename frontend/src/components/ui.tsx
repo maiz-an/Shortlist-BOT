@@ -259,7 +259,7 @@ export const Th = ({ children, className }: PropsWithChildren<{ className?: stri
 export const Td = ({ children, className }: PropsWithChildren<{ className?: string }>) => <td className={cx('border-b border-slate-100 px-4 py-3 align-middle', className)}>{children}</td>;
 
 /* ---------- Modal / confirm ---------- */
-export function Modal({ open, title, onClose, children, footer }: PropsWithChildren<{ open: boolean; title: string; onClose: () => void; footer?: ReactNode }>) {
+export function Modal({ open, title, onClose, children, footer, wide }: PropsWithChildren<{ open: boolean; title: string; onClose: () => void; footer?: ReactNode; wide?: boolean }>) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -280,7 +280,7 @@ export function Modal({ open, title, onClose, children, footer }: PropsWithChild
         >
           <motion.div
             role="dialog" aria-modal="true" aria-label={title}
-            className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-t-xl bg-card shadow-pop sm:rounded-lg"
+            className={cx('flex max-h-[92vh] w-full flex-col rounded-t-xl bg-card shadow-pop sm:rounded-lg', wide ? 'max-w-3xl' : 'max-w-2xl')}
             initial={{ opacity: 0, y: 24, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
             onClick={(e) => e.stopPropagation()}

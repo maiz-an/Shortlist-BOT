@@ -1,5 +1,5 @@
 import { useSourceMutations, useSources } from '../features/search/api';
-import { Badge, Button, ErrorState, Input, Loading, PageHeader, TableShell, Td, Th, errMsg, useToast } from '../components/ui';
+import { Badge, ErrorState, Input, Loading, PageHeader, TableShell, Td, Th, Toggle, errMsg, useToast } from '../components/ui';
 
 export function SourcesPage() {
   const { data, isLoading, error, refetch } = useSources();
@@ -23,7 +23,7 @@ export function SourcesPage() {
                   <Input type="number" min={1000} max={60000} step={500} defaultValue={s.rateLimitMs} disabled={!s.implemented} onBlur={(e) => Number(e.target.value) !== s.rateLimitMs && patch(s.id, { rateLimitMs: Number(e.target.value) })} />
                 </Td>
                 <Td>{s.listingCount}</Td>
-                <Td className="text-right">{s.implemented && <Button onClick={() => patch(s.id, { enabled: !s.enabled })}>{s.enabled ? 'Disable' : 'Enable'}</Button>}</Td>
+                <Td className="text-right">{s.implemented && <Toggle checked={s.enabled} onChange={(enabled) => patch(s.id, { enabled })} label={`${s.enabled ? 'Disable' : 'Enable'} ${s.name}`} />}</Td>
               </tr>
             ))}
           </tbody>

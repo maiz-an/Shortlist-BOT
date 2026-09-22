@@ -125,6 +125,8 @@ export interface CvProfile {
   category: string;
   filePath: string | null;
   originalFileName: string | null;
+  /** The name of the PDF you uploaded yourself for sending, if any - independent of the analysis file above. */
+  sendPdfOriginalFileName: string | null;
   enabled: boolean;
   skills: string[];
   preferredJobKeywords: string[];
@@ -132,6 +134,8 @@ export interface CvProfile {
   experienceYears?: number | null;
   textReadable?: boolean;
   fileExists?: boolean;
+  /** Whether a PDF has been uploaded for sending. */
+  sendPdfReady?: boolean;
 }
 
 export interface JobSourceRow {

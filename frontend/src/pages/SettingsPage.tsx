@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useProfiles, useSources } from '../features/search/api';
 import {
-  useAiStatus, useSaveSetting, useSettings, useWhatsAppConnect, useWhatsAppDisconnect, useWhatsAppQr, useWhatsAppStatus, useWhatsAppTest,
+  useAiStatus, useSaveSetting, useSettings, useUpdateCheck, useWhatsAppConnect, useWhatsAppDisconnect, useWhatsAppQr, useWhatsAppStatus, useWhatsAppTest,
 } from '../features/settings/api';
 import type { Settings } from '../types';
 import { Badge, Button, Card, ErrorState, Field, Input, Loading, PageHeader, Toggle, cx, errMsg, useToast } from '../components/ui';
@@ -52,6 +52,7 @@ export function SettingsPage() {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
   const tab: TabId = TABS.some((t) => t.id === requested) ? (requested as TabId) : 'profile';
+  const updateCheck = useUpdateCheck(tab === 'system'); // only pings GitHub once you're actually looking at this tab
   const openTab = (id: TabId) => setParams(id === 'profile' ? {} : { tab: id }, { replace: true });
 
   if (isLoading) return <Loading />;
@@ -174,7 +175,7 @@ export function SettingsPage() {
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field label="Default minimum score for review" hint="Used when no search profile sets one."><Input type="number" min={0} max={100} value={p.defaultMinScore} onChange={(e) => pipeline.setV({ ...p, defaultMinScore: Number(e.target.value) })} /></Field>
                         <Field label="Max description fetches per query" hint="Extra requests to load full job text. Lower is gentler on the source."><Input type="number" min={0} max={200} value={p.maxDescriptionFetches} onChange={(e) => pipeline.setV({ ...p, maxDescriptionFetches: Number(e.target.value) })} /></Field>
-                        <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={p.fetchDescriptions} onChange={(e) => pipeline.setV({ ...p, fetchDescriptions: e.target.checked })} />Fetch full job descriptions (needed for good analysis)</label>
+                        <div className="flex items-center gap-2 text-sm sm:col-span-2"><Toggle checked={p.fetchDescriptions} onChange={(fetchDescriptions) => pipeline.setV({ ...p, fetchDescriptions })} label="Fetch full job descriptions" /><span>Fetch full job descriptions (needed for good analysis)</span></div>
                       </div>
                       <Button className="mt-4" variant="primary" loading={pipeline.saving} onClick={pipeline.save}>Save pipeline</Button>
                     </Card>
@@ -185,7 +186,7 @@ export function SettingsPage() {
             <>
                     <Card title="Automatic search">
                       <div className="space-y-4">
-                        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={s.enabled} onChange={(e) => scheduler.setV({ ...s, enabled: e.target.checked })} />Run searches automatically (applications are never sent automatically)</label>
+                        <div className="flex items-center gap-2 text-sm"><Toggle checked={s.enabled} onChange={(enabled) => scheduler.setV({ ...s, enabled })} label="Run searches automatically" /><span>Run searches automatically (applications are never sent automatically)</span></div>
                         <div className="max-w-xs"><Field label="Every (hours)"><Input type="number" min={0.25} step={0.25} max={168} value={s.intervalHours} onChange={(e) => scheduler.setV({ ...s, intervalHours: Number(e.target.value) })} /></Field></div>
                         <fieldset>
                           <legend className="mb-1 text-sm font-medium text-slate-700">Profiles (none selected = all enabled)</legend>
@@ -209,13 +210,17 @@ export function SettingsPage() {
 
           {tab === 'system' && (
             <>
-                    <Card title="Local AI">
+                    <Card title="AI">
                       <p className="flex items-center gap-2 text-sm">
                         <Badge className={ai.data?.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}>{ai.data?.ok ? 'Ready' : 'Unavailable'}</Badge>
                         <span>{ai.data ? `${ai.data.provider} · ${ai.data.model}` : 'Checking…'}</span>
                       </p>
                       {ai.data && !ai.data.ok && <p className="mt-2 text-sm text-rose-700">{ai.data.detail}</p>}
-                      <p className="mt-2 text-xs text-slate-500">Model and URL are set with OLLAMA_MODEL / OLLAMA_BASE_URL in backend/.env.</p>
+                      <p className="mt-2 text-xs text-slate-500">
+                        {ai.data?.provider === 'openai-compatible'
+                          ? 'Set with AI_PROVIDER, AI_API_BASE_URL, AI_API_KEY and AI_API_MODEL in backend/.env.'
+                          : 'Set with AI_PROVIDER, OLLAMA_MODEL and OLLAMA_BASE_URL in backend/.env.'}
+                      </p>
                     </Card>
 
                     <Card title="About">
@@ -224,12 +229,41 @@ export function SettingsPage() {
                         <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Version</dt><dd className="font-medium tabular-nums text-slate-900">{APP_VERSION}</dd></div>
                         <div className="flex justify-between gap-4 py-2"><dt className="text-slate-500">Changes</dt><dd><a className="text-brand-600 hover:underline" href="https://github.com/maiz-an/Shortlist-BOT/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer noopener">Changelog</a></dd></div>
                       </dl>
+                      <div className="mt-3 border-t border-slate-100 pt-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <UpdateStatus check={updateCheck.data} loading={updateCheck.isFetching} />
+                          <Button variant="secondary" onClick={() => updateCheck.refetch()} disabled={updateCheck.isFetching}>
+                            {updateCheck.isFetching ? 'Checking…' : 'Check for updates'}
+                          </Button>
+                        </div>
+                        {updateCheck.data?.checked && updateCheck.data.updateAvailable && (
+                          <div className="mt-3 rounded-lg bg-brand-50 p-3 text-sm text-brand-900">
+                            <p className="font-medium">Version {updateCheck.data.latest} is available (you have {updateCheck.data.current}).</p>
+                            <p className="mt-1 text-xs text-brand-800">
+                              Run <code className="rounded bg-white/60 px-1">update.cmd</code> (Windows) or <code className="rounded bg-white/60 px-1">./update.sh</code> (Mac/Linux) from the app folder, then restart.{' '}
+                              {updateCheck.data.releaseUrl && (
+                                <a className="underline" href={updateCheck.data.releaseUrl} target="_blank" rel="noreferrer noopener">See what changed</a>
+                              )}
+                            </p>
+                          </div>
+                        )}
+                        {updateCheck.data && !updateCheck.data.checked && (
+                          <p className="mt-2 text-xs text-slate-500">{updateCheck.data.error ?? 'Could not check for updates.'}</p>
+                        )}
+                      </div>
                     </Card>
             </>
           )}
         </motion.div>
     </div>
   );
+}
+
+function UpdateStatus({ check, loading }: { check: ReturnType<typeof useUpdateCheck>['data']; loading: boolean }) {
+  if (loading && !check) return <p className="text-sm text-slate-500">Checking…</p>;
+  if (!check) return <p className="text-sm text-slate-500">Not checked yet.</p>;
+  if (!check.checked) return <p className="text-sm text-slate-700">Up to date (last checked: unable to reach GitHub).</p>;
+  return <p className="text-sm text-slate-700">{check.updateAvailable ? `Update available: v${check.latest}` : 'Up to date.'}</p>;
 }
 
 /**

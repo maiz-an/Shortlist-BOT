@@ -3,6 +3,8 @@
 Everything runs on your own computer. Follow the steps in order; each has a check so you know it worked.
 Time needed: about 30 minutes, most of it downloading the AI model.
 
+**Setting this up on a computer that has nothing installed yet?** Skip straight to running `install.cmd` (Windows) or `./install.sh` (macOS/Linux) from this folder - it does steps 1, 3, 4 and 5 below for you: installs Node.js and Git if missing, sets up the built-in database, asks whether you want a cloud AI (paste an API key) or a local one with Ollama (and picks a model sized to your RAM), offers to set up WhatsApp alerts too (downloads and configures OpenWA - you only need to scan the QR code afterwards), and writes `backend/.env` / `frontend/.env`. Re-run it any time; it never overwrites a `.env` or setup you already have. The rest of this guide is for doing it by hand, or for the parts the installer does not cover (Gmail, phone access, optional job sources).
+
 ## Use it from your phone
 
 The app is private to your computer by default. To reach it from your phone (experimental, not yet verified end to end):
@@ -114,7 +116,9 @@ On its first start it also creates all the tables. It listens on `127.0.0.1:5872
 ollama pull qwen3:8b
 ollama list         # should show qwen3:8b
 ```
-The download is about 5 GB. If the pull seems stuck at "verifying", run the same command again. You need about 8 GB of free RAM to run it; without a GPU each analysis takes a few minutes.
+The download is about 5 GB. If the pull seems stuck at "verifying", run the same command again. You need about 8 GB of free RAM to run it; without a GPU each analysis takes a few minutes. On a smaller machine, pull a lighter model instead (`qwen3:4b` needs about 4 GB RAM, `qwen3:1.7b` about 2 GB) and set `OLLAMA_MODEL` to match in `backend/.env`.
+
+**No Ollama, or prefer a cloud AI?** Set `AI_PROVIDER=openai` in `backend/.env` plus `AI_API_KEY` (and `AI_API_BASE_URL` / `AI_API_MODEL` if you're not using OpenAI itself) - see the commented-out block in `backend/.env.example`. This works with OpenAI, OpenRouter, Groq, Together.ai, or anything else that speaks the OpenAI chat-completions format. Skip the rest of this step if you go this way.
 
 ## 5. Configure and install the backend
 
@@ -153,7 +157,9 @@ Check: the sidebar's System box shows Backend, Database and Ollama with green do
 ## 7. First-time setup inside the app
 
 1. **Settings**: enter your name, email and phone (used to sign emails). Your experience, years and skills are read from your CV files, so scoring and emails always match the CV they use.
-2. **CV profiles**: fill in each CV's skills and upload the PDF/DOC/DOCX file (max 5 MB).
+2. **CV profiles**: fill in each CV's skills, then upload two things - they're independent:
+   - **CV file** (PDF or DOCX, max 5 MB; older .doc is not supported since its text can't be read - save as .docx or export to PDF first) - only used to read your skills and experience for scoring and emails, never sent anywhere.
+   - **PDF for sending** (PDF only, max 5 MB) - your own, properly formatted PDF, exactly what gets attached when an application email is sent. Sending is blocked until you upload one; preview it any time from the CV profiles page.
 3. **Email**: connect Gmail (next section).
 4. **Dashboard, Find new jobs**, or **Search, Add job manually**. Good matches land in Review.
 
@@ -198,12 +204,21 @@ cd frontend && npm run dev
 
 ## Updating to a new version
 
+Settings → System shows your current version and checks GitHub for a newer one. To update, run:
+
+```bash
+update.cmd      # Windows
+./update.sh     # macOS / Linux
+```
+It pulls the latest code, reinstalls packages, prepares the database client, and applies any new database migrations (best-effort on the built-in database - see below) - then run `start.cmd` / `./start.sh` again. Safe to re-run if a step fails partway through; your `.env` files and stored data are never touched.
+
+Doing it by hand instead:
 ```bash
 git pull
 cd backend  && npm install && npm run db:deploy     # applies any new database migrations
 cd ../frontend && npm install
 ```
-Read [CHANGELOG.md](CHANGELOG.md) first; a release can ask you to change your `.env` files. The current version is in the `VERSION` file.
+Either way, read [CHANGELOG.md](CHANGELOG.md) first; a release can ask you to change your `.env` files. The current version is in the `VERSION` file.
 
 ## Troubleshooting
 
@@ -218,6 +233,7 @@ Read [CHANGELOG.md](CHANGELOG.md) first; a release can ask you to change your `.
 | Gmail says `access_denied` | Add your address as a test user in the Google consent screen. |
 | Gmail worked, then stopped after a week | Testing-mode apps expire after 7 days. Click **Connect Gmail** again. |
 | Send blocked: "CV file missing" | Upload the file on the CV profiles page. |
+| Send blocked: "No PDF has been uploaded for sending" | Upload a PDF (your own, not the CV file used for scoring) on the CV profiles page. |
 
 ## Your data and secrets
 

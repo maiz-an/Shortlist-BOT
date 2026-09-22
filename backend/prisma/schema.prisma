@@ -114,6 +114,10 @@ model CVProfile {
   excludedKeywords     String[]
   textContent          String?
   experienceYears      Float?
+  // A separate PDF you upload yourself, used only when emailing an application - independent of
+  // filePath above, which is only ever used to read the CV's text (PDF or DOCX, whichever you had).
+  sendPdfPath              String?
+  sendPdfOriginalFileName  String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

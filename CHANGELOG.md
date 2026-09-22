@@ -3,6 +3,22 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.7.0] - 2026-09-22
+
+### Added
+- **Update check in Settings.** Shows your current version and checks GitHub for a newer release, with a link to what changed.
+- **`update.cmd` / `update.sh`**, safe to re-run: pulls the latest code, reinstalls packages, prepares the database client (with an automatic retry if the file is briefly locked) and applies any new database migrations (best-effort on the built-in database).
+- **`install.cmd` / `install.sh`** for a computer with nothing set up yet: install Node.js and Git if missing, set up the built-in database, ask whether you want a cloud AI or a local one with Ollama (and pick a model sized to your RAM), optionally set up WhatsApp alerts end to end, and start the app. Re-running is always safe; nothing you already have is overwritten. If the app was obtained as a ZIP download rather than a Git clone, the installer turns the folder into a proper checkout so `update.cmd`/`update.sh` work afterwards too.
+- **Any AI, not just Ollama.** Set `AI_PROVIDER=openai` in `backend/.env` to use any cloud AI that speaks the OpenAI chat format (OpenAI, OpenRouter, Groq, Together.ai, ...) instead of a local model. Ollama stays the default.
+- **A CV now has two independent files**: the one used to read your skills and experience (PDF or DOCX, whichever reads better), and a PDF you upload yourself for sending - exactly what gets attached to an application email, previewable in-app before you ever send anything. Sending is blocked until a PDF is uploaded, rather than guessing.
+- Every Enable/Disable switch in the app (CV profiles, job sources, search profiles, automatic search, fetch full descriptions) is now a toggle, not a text button or checkbox.
+
+### Changed
+- **Old `.doc` (Word 97-2003) CV uploads are no longer accepted.** Nothing in the app could ever read their text, so scoring and emails silently saw nothing on them; DOCX and PDF are unaffected.
+
+### Fixed
+- CV scoring and email-writing tests now include a check against the real, live CV data (skills and keywords), confirming a Full Stack job always picks the Full Stack CV and an IT Support job always picks the IT Support CV, with a clear margin either way.
+
 ## [1.6.0] - 2026-09-22
 
 ### Added
