@@ -42,6 +42,13 @@ export class JobAnalysisController {
     return res;
   }
 
+  /** Re-scores every analysed job with the current rules, from the saved AI answers (fast, no model call). */
+  @Post('jobs/rescore')
+  @HttpCode(200)
+  async rescore() {
+    return { rescored: await this.analysis.rescoreAll() };
+  }
+
   @Post('jobs/analyze-pending')
   @HttpCode(202)
   async analyzePending() {

@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AI_PROVIDER, AIProvider } from '../ai/ai-provider';
@@ -31,8 +31,11 @@ export async function runAiAnalysis(ai: AIProvider, input: AnalysisPromptInput):
   throw lastError!;
 }
 
+/** Bump when the scoring rules change; jobs are then re-scored once from their saved AI answers (no AI call needed). */
+export const SCORING_VERSION = 4;
+
 @Injectable()
-export class AnalysisService {
+export class AnalysisService implements OnApplicationBootstrap {
   private readonly logger = new Logger(AnalysisService.name);
 
   constructor(
@@ -92,7 +95,7 @@ export class AnalysisService {
         requiredYears: result.experienceRequiredYears, candidateYears,
         experienceCompatible: result.experienceCompatible, locationCompatible: result.locationCompatible,
         excludedHits: result.excludedHits, ai: { recommendation: ai.recommendation, matchScore: ai.matchScore, reason: ai.reason },
-      });
+      }) + (result.levelNote ? ` ${result.levelNote}` : '');
 
       const data = {
         category: ai.category, aiMatchScore: ai.matchScore, finalMatchScore: result.score, recommendedCvId: cv?.id ?? null,
@@ -119,6 +122,77 @@ export class AnalysisService {
       if (inPipeline) await this.apps.setStatus(jobId, 'NEW').catch(() => undefined);
       throw err;
     }
+  }
+
+  /** After an upgrade that changed the scoring rules, re-score existing jobs once. Never blocks or breaks start-up. */
+  async onApplicationBootstrap() {
+    try {
+      const saved = await this.settings.get('scoring_version');
+      if (saved.version >= SCORING_VERSION) return;
+      const n = await this.rescoreAll();
+      await this.settings.set('scoring_version', { version: SCORING_VERSION });
+      this.logger.log({ event: 'analysis.rescored_after_upgrade', jobs: n, version: SCORING_VERSION });
+    } catch (err) {
+      this.logger.warn({ event: 'analysis.rescore_failed', error: (err as Error).message });
+    }
+  }
+
+  /**
+   * Recomputes score, matched/missing skills, recommendation and reason for every analysed job using the AI answer
+   * saved at analysis time, so no model call is needed. Workflow statuses are not touched.
+   */
+  async rescoreAll(): Promise<number> {
+    const [cvRows, profiles, thresholds] = await Promise.all([
+      this.prisma.cVProfile.findMany({ where: { enabled: true } }),
+      this.prisma.jobSearchProfile.findMany({ where: { enabled: true } }),
+      this.settings.get('match_score_thresholds'),
+    ]);
+    const cvs: CvCandidate[] = cvRows.map((c) => ({
+      id: c.id, name: c.name, category: c.category, skills: c.skills,
+      preferredJobKeywords: c.preferredJobKeywords, excludedKeywords: c.excludedKeywords, years: c.experienceYears,
+    }));
+    const knownYears = cvs.map((c) => c.years).filter((y): y is number => typeof y === 'number');
+    const constraints = {
+      excludedKeywords: [...new Set(profiles.flatMap((p) => p.excludedKeywords))],
+      preferredJobTypes: [...new Set(profiles.flatMap((p) => p.preferredJobTypes))],
+      preferredLocations: [...new Set(profiles.flatMap((p) => p.preferredLocations))],
+      keywords: [...new Set(profiles.flatMap((p) => p.keywords))],
+    };
+    const rows = await this.prisma.jobAnalysis.findMany({ include: { job: { include: { application: { select: { emailDraft: { select: { id: true } } } } } } } });
+    let done = 0;
+    for (const row of rows) {
+      const saved = row.rawAiResponse as { ai?: JobAnalysisOutput } | null;
+      const parsed = saved?.ai ? jobAnalysisSchema.safeParse(saved.ai) : null;
+      if (!parsed?.success) continue; // analysed before answers were saved, or malformed: leave as is
+      const ai = parsed.data;
+      const job = row.job;
+      const jobText = { title: job.title, description: job.description };
+      const pick = selectCv(jobText, cvs, ai.category, cvs.some((c) => c.id === row.recommendedCvId) ? row.recommendedCvId : null);
+      const cv = cvs.find((c) => c.id === (row.recommendedCvId && cvs.some((c2) => c2.id === row.recommendedCvId) ? row.recommendedCvId : pick.cvId)) ?? null;
+      const candidateYears = cv?.years ?? (knownYears.length ? Math.max(...knownYears) : null);
+      const result = calculateScore({
+        job: { ...jobText, location: job.location, jobType: job.jobType }, cv, constraints, ai, candidateYears, cvRelevance: pick.relevance,
+      });
+      const recommendation = recommendationFor(result.score, thresholds, result.excludedHits, ai);
+      const reason = buildReason({
+        score: result.score, recommendation, hasCv: !!cv, matched: result.matchedSkills, missing: result.missingSkills,
+        requiredYears: result.experienceRequiredYears, candidateYears, experienceCompatible: result.experienceCompatible,
+        locationCompatible: result.locationCompatible, excludedHits: result.excludedHits,
+        ai: { recommendation: ai.recommendation, matchScore: ai.matchScore, reason: ai.reason },
+      }) + (result.levelNote ? ` ${result.levelNote}` : '');
+      await this.prisma.jobAnalysis.update({
+        where: { id: row.id },
+        data: {
+          finalMatchScore: result.score, recommendedCvId: cv?.id ?? null, matchedSkills: result.matchedSkills, missingSkills: result.missingSkills,
+          experienceCompatible: result.experienceCompatible, locationCompatible: result.locationCompatible, recommendation, reason,
+          rawAiResponse: { ...(saved as object), breakdown: result.breakdown } as unknown as Prisma.InputJsonValue,
+        },
+      });
+      // A job that now scores as a clear SKIP leaves the review queue, unless the user already started on it.
+      if (job.status === 'REVIEW' && recommendation === 'SKIP' && !job.application?.emailDraft) await this.apps.setStatus(job.id, 'ANALYZED');
+      done++;
+    }
+    return done;
   }
 
   private async breakTie(job: { title: string; description: string }, cvs: CvCandidate[], pick: ReturnType<typeof selectCv>) {

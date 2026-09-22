@@ -91,7 +91,7 @@ export function SettingsPage() {
             <>
                     <Card title="Your details (used to sign emails)">
                       <p className="mb-4 text-sm text-slate-500">Only your contact details live here. Your experience, years and skills are read from your CV files, so scoring and emails always match the CV they use.</p>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field label="Name"><Input value={c.name} onChange={(e) => candidate.setV({ ...c, name: e.target.value })} /></Field>
                         <Field label="Email"><Input value={c.email} onChange={(e) => candidate.setV({ ...c, email: e.target.value })} /></Field>
                         <Field label="Phone"><Input value={c.phone} onChange={(e) => candidate.setV({ ...c, phone: e.target.value })} /></Field>
@@ -128,7 +128,7 @@ export function SettingsPage() {
                         <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">Gmail is not connected, so nothing can be sent yet. Connect it on the Email page.</p>
                       )}
 
-                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field label="Minimum match score" hint="Only jobs at or above this score are applied to.">
                           <Input type="number" min={50} max={100} value={aa.minScore} onChange={(e) => autoApply.setV({ ...aa, minScore: Math.max(50, Math.min(100, Number(e.target.value))) })} />
                         </Field>
@@ -155,7 +155,7 @@ export function SettingsPage() {
           {tab === 'matching' && (
             <>
                     <Card title="Match score bands">
-                      <div className="grid gap-3 sm:grid-cols-5">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
                         {LABELS.map((l, i) => (
                           <Field key={l} label={`${l[0].toUpperCase()}${l.slice(1)} from`} hint={`up to ${t[l][1]}`}>
                             <Input type="number" min={0} max={100} disabled={i === 0} value={t[l][0]} onChange={(e) => setLower(l, Math.max(0, Math.min(100, Number(e.target.value))))} />
@@ -167,7 +167,7 @@ export function SettingsPage() {
                     </Card>
 
                     <Card title="Pipeline">
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <Field label="Default minimum score for review" hint="Used when no search profile sets one."><Input type="number" min={0} max={100} value={p.defaultMinScore} onChange={(e) => pipeline.setV({ ...p, defaultMinScore: Number(e.target.value) })} /></Field>
                         <Field label="Max description fetches per query" hint="Extra requests to load full job text. Lower is gentler on the source."><Input type="number" min={0} max={200} value={p.maxDescriptionFetches} onChange={(e) => pipeline.setV({ ...p, maxDescriptionFetches: Number(e.target.value) })} /></Field>
                         <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={p.fetchDescriptions} onChange={(e) => pipeline.setV({ ...p, fetchDescriptions: e.target.checked })} />Fetch full job descriptions (needed for good analysis)</label>

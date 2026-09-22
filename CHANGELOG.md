@@ -3,6 +3,24 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.4.0] - 2026-09-22
+
+### Fixed
+- **A real layout bug on any screen narrower than about 1100px** (phones, small tablets, some laptop windows): several cards (the application tracker, the CV edit form, job/CV detail grids, filter bars) used a CSS grid that had no single-column fallback, so on a narrow screen the browser let them grow to their natural full width instead of shrinking to fit, pushing content off the right edge. Every such grid across the app now has an explicit single-column base, so nothing is cut off at any width.
+
+### Changed
+- **Scoring now accounts for the level of the role.** An internship, trainee or new-grad role loses 35 points if you have 2 or more years of experience, and a senior or lead title with no stated years loses 8 if you have under 6. The reason text says why.
+- **Existing jobs are re-scored automatically once after an upgrade** from their saved AI answers (fast, no model call), and jobs that now score as a clear Skip leave the review queue unless you had already started on them. `POST /api/jobs/rescore` does the same on demand.
+- The Jobs list now opens sorted by best match, and sorting by match hides jobs that have not been scored yet so they cannot sit above the best ones.
+- **Scrollbars are slim and match the app's theme** everywhere a box scrolls (the page, tables, the database view, modals, the mobile menu), instead of the browser's default one.
+- **The Jobs and Applications tables adapt to the screen.** Below about 1100px wide they switch to a stack of cards (no side-scrolling needed); from about 1100px up they show the full table, now sized so text wraps onto two or three lines instead of one word per line.
+- Checked and confirmed clean (no cut-off content, no needless side-scrolling) on every page from a small phone (320px) up to an ultra-wide monitor (2560px), including all Settings tabs and the CV/job/application detail pages.
+
+### Added
+- **GulfTalent (Qatar) as an optional source through Apify's free plan.** Full descriptions, apply links and recruiter emails. See SETUP.md.
+- **Follow-ups.** When an application is sent, a follow-up date a week later is set automatically. The dashboard lists follow-ups that are due, overdue dates show in red on the Applications page, and each applied application has a ready-to-send follow-up note that opens in your own mail app.
+- **Indeed as an optional job source** (via the open-source JobSpy library). Optional install, see SETUP.md. Uses a quoted phrase search so results match the job title, one small request per search, no login. Picked from a review of free options: Bayt blocks automated access (HTTP 403) and is not used; Adzuna has no confirmed Gulf coverage, JobDataAPI is paid, and Arbeitnow (Europe) and Remotive (remote only, strict terms) add little for Qatar.
+
 ## [1.3.0] - 2026-09-22
 
 ### Changed

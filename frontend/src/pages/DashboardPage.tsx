@@ -3,7 +3,7 @@ import { useRunSearch } from '../features/search/api';
 import { useDashboard } from '../features/settings/api';
 import { BotNote } from '../features/bot/BotNote';
 import { CountUp, Item, Stagger } from '../components/motion';
-import { Badge, Button, Card, EmptyState, ErrorState, Loading, PageHeader, ScoreBar, errMsg, fmtDateTime, useToast } from '../components/ui';
+import { Badge, Button, Card, EmptyState, ErrorState, Loading, PageHeader, ScoreBar, errMsg, fmtDate, fmtDateTime, useToast } from '../components/ui';
 
 function greeting() {
   const h = new Date().getHours();
@@ -75,7 +75,7 @@ export function DashboardPage() {
         ]}
       /></Item>
 
-      <Item><div className="grid gap-6 lg:grid-cols-3">
+      <Item><div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title="Best matches waiting for review" className="lg:col-span-2" actions={<Link className="text-sm text-brand-600 hover:underline" to="/jobs?status=REVIEW">View all</Link>}>
           {data.topReview.length === 0 ? (
             <EmptyState title="Nothing to review yet" hint="Run a search or add a job by hand. Good matches show up here." />
@@ -110,6 +110,21 @@ export function DashboardPage() {
             </dl>
           )}
         </Card>
+
+        {data.followUps.due > 0 && (
+          <Card title={`Follow-ups due (${data.followUps.due})`} className="lg:col-span-3" actions={<Link className="text-sm text-brand-600 hover:underline" to="/applications?status=APPLIED">All applied</Link>}>
+            <ul className="-my-2 divide-y divide-slate-100">
+              {data.followUps.items.map((f) => (
+                <li key={f.id}>
+                  <Link to={`/applications/${f.id}`} className="-mx-2 flex flex-wrap items-center justify-between gap-2 rounded-md px-2 py-3 hover:bg-slate-50">
+                    <span className="min-w-0 truncate"><span className="font-medium text-slate-900">{f.jobTitle}</span><span className="text-slate-600"> · {f.company}</span></span>
+                    <span className="text-sm text-red-700">was due {fmtDate(f.followUpDate)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
       </div></Item>
     </Stagger>
   );

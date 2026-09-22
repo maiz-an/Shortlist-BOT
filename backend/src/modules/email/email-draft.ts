@@ -113,6 +113,21 @@ export function buildFallbackEmail(i: {
   return { subject, body: lines.join('\n').trim() };
 }
 
+/** A short, plain follow-up note for an application that has had no reply. Built from facts only; no AI needed. */
+export function buildFollowUpEmail(i: { company: string; jobTitle: string; appliedDate: Date | null; candidateName: string; originalSubject?: string | null }): { subject: string; body: string } {
+  const when = i.appliedDate ? ` on ${i.appliedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}` : '';
+  const lines = [
+    `Hi ${i.company} team,`,
+    '',
+    `I applied for the ${i.jobTitle} role${when} and wanted to check that my application reached you. I'm still interested and can send anything else you need.`,
+    '',
+    'Thanks,',
+    i.candidateName,
+  ];
+  const subject = i.originalSubject ? (/^re:/i.test(i.originalSubject) ? i.originalSubject : `Re: ${i.originalSubject}`) : `Following up: ${i.jobTitle}`;
+  return { subject, body: lines.join('\n').trim() };
+}
+
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const words = (s: string) => (s.toLowerCase().match(/[a-z0-9+#.]{3,}/g) ?? []).map((w) => w.replace(/\.+$/, '')).filter((w) => w.length >= 3);

@@ -2,6 +2,8 @@ import { Body, Controller, Get, Inject, Injectable, Module, OnModuleInit, Param,
 import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JOB_SOURCES, JobSource } from './job-source.interface';
+import { GulfTalentSource } from './gulftalent.source';
+import { IndeedSource } from './indeed.source';
 import { LinkedInSource } from './linkedin.source';
 
 @Injectable()
@@ -12,7 +14,7 @@ export class JobSourceRegistry implements OnModuleInit {
   async onModuleInit() {
     for (const s of this.sources) {
       await this.prisma.jobSource
-        .upsert({ where: { key: s.key }, update: {}, create: { key: s.key, name: s.name, enabled: true, rateLimitMs: 3000 } })
+        .upsert({ where: { key: s.key }, update: { name: s.name }, create: { key: s.key, name: s.name, enabled: true, rateLimitMs: 3000 } })
         .catch(() => undefined);
     }
   }
@@ -52,7 +54,13 @@ export class JobSourcesController {
   controllers: [JobSourcesController],
   providers: [
     LinkedInSource,
-    { provide: JOB_SOURCES, useFactory: (li: LinkedInSource) => [li] as JobSource[], inject: [LinkedInSource] },
+    IndeedSource,
+    GulfTalentSource,
+    {
+      provide: JOB_SOURCES,
+      useFactory: (li: LinkedInSource, indeed: IndeedSource, gt: GulfTalentSource) => [li, indeed, gt] as JobSource[],
+      inject: [LinkedInSource, IndeedSource, GulfTalentSource],
+    },
     JobSourceRegistry,
   ],
   exports: [JobSourceRegistry],

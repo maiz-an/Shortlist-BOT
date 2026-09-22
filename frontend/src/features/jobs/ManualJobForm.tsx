@@ -29,7 +29,7 @@ export function ManualJobForm({ onDone }: { onDone?: () => void }) {
   };
 
   return (
-    <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={submit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Field label="Company *"><Input required maxLength={200} value={f.company} onChange={set('company')} /></Field>
       <Field label="Job title *"><Input required maxLength={300} value={f.title} onChange={set('title')} /></Field>
       <Field label="Location"><Input maxLength={200} value={f.location} onChange={set('location')} placeholder="Doha, Qatar" /></Field>

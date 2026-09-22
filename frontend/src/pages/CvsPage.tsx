@@ -15,7 +15,7 @@ function CvForm({ initial, busy, onSave }: { initial: CvInput; busy: boolean; on
   return (
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSave(v); }}>
       <Field label="Name"><Input required maxLength={120} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} /></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Category"><Select value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })}>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select></Field>
         <Field label="Enabled"><Select value={String(v.enabled)} onChange={(e) => setV({ ...v, enabled: e.target.value === 'true' })}><option value="true">Enabled</option><option value="false">Disabled</option></Select></Field>
       </div>
@@ -89,7 +89,7 @@ export function CvsPage() {
       {isLoading ? <Loading /> : error ? <ErrorState error={error} onRetry={() => refetch()} /> : !data?.length ? (
         <EmptyState title="No CV profiles" hint="Add one for each CV you use, then upload its file." />
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">{data.map((cv) => <CvCard key={cv.id} cv={cv} onEdit={() => setEditing(cv)} onDelete={() => setDeleting(cv)} />)}</div>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">{data.map((cv) => <CvCard key={cv.id} cv={cv} onEdit={() => setEditing(cv)} onDelete={() => setDeleting(cv)} />)}</div>
       )}
 
       <Modal open={!!editing} title={editing === 'new' ? 'Add CV profile' : 'Edit CV profile'} onClose={() => setEditing(null)}>

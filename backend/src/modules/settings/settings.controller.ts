@@ -21,6 +21,7 @@ const schemas: Record<SettingKey, z.ZodTypeAny> = {
     minScore: z.number().int().min(50).max(100),
     dailyLimit: z.number().int().min(1).max(50),
   }),
+  scoring_version: z.object({ version: z.number().int().min(0) }),
   pipeline: z.object({
     defaultMinScore: z.number().int().min(0).max(100),
     fetchDescriptions: z.boolean(),

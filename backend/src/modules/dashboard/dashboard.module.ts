@@ -17,7 +17,9 @@ export class DashboardService {
     const t = await this.settings.get('match_score_thresholds');
     const strong = { analysis: { is: { finalMatchScore: { gte: t.strong[0] } } } };
     const sentWhere = { appliedDate: { not: null } } as const;
-    const [candidate, jobsFound, todayNew, analyzed, strongMatches, todayStrong, pendingReview, sent, todaySent, interviews, offers, rejected, respondedRejected, lastRun, recent] =
+    const endOfToday = new Date(startOfDay.getTime() + 24 * 3600 * 1000 - 1);
+    const dueWhere = { status: 'APPLIED' as const, followUpDate: { lte: endOfToday } };
+    const [candidate, jobsFound, todayNew, analyzed, strongMatches, todayStrong, pendingReview, sent, todaySent, interviews, offers, rejected, respondedRejected, lastRun, dueCount, dueItems, recent] =
       await Promise.all([
         this.settings.get('candidate'),
         this.prisma.job.count(),
@@ -33,6 +35,8 @@ export class DashboardService {
         this.prisma.application.count({ where: { status: 'REJECTED', ...sentWhere } }),
         this.prisma.application.count({ where: { status: { in: ['INTERVIEW', 'OFFER', 'REJECTED'] }, ...sentWhere } }),
         this.prisma.searchRun.findFirst({ orderBy: { startedAt: 'desc' }, include: { jobSearchProfile: { select: { name: true } } } }),
+        this.prisma.application.count({ where: dueWhere }),
+        this.prisma.application.findMany({ where: dueWhere, take: 5, orderBy: { followUpDate: 'asc' }, select: { id: true, company: true, jobTitle: true, followUpDate: true } }),
         this.prisma.job.findMany({
           where: { status: 'REVIEW' }, take: 5, orderBy: { analysis: { finalMatchScore: 'desc' } },
           select: { id: true, title: true, company: true, location: true, analysis: { select: { finalMatchScore: true, recommendedCv: { select: { name: true } } } } },
@@ -43,7 +47,7 @@ export class DashboardService {
       totals: { jobsFound, todayNew, jobsAnalyzed: analyzed, strongMatches, pendingReview, applicationsSent: sent, interviews, offers, rejected },
       today: { newJobs: todayNew, strongMatches: todayStrong, pendingReview, applicationsSent: todaySent },
       responseRate: responseRate(sent, respondedRejected),
-      lastRun, topReview: recent,
+      lastRun, topReview: recent, followUps: { due: dueCount, items: dueItems },
     };
   }
 }

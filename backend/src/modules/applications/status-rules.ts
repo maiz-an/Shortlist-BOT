@@ -19,6 +19,14 @@ export function assertManualTransition(from: JobStatus, to: JobStatus): void {
   if (SYSTEM_ONLY.includes(to)) throw new BadRequestException(`${to} is set automatically by the system`);
 }
 
+/** When to follow up if the employer has not replied: a week after applying, at midday so the date is stable in any timezone. */
+export function defaultFollowUp(from: Date, days = 7): Date {
+  const d = new Date(from);
+  d.setDate(d.getDate() + days);
+  d.setHours(12, 0, 0, 0);
+  return d;
+}
+
 /** Setting a date-bearing status for the first time stamps the applied date. */
 export function setsAppliedDate(to: JobStatus): boolean {
   return to === 'APPLIED';

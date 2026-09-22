@@ -1,7 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { JobStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { APPLICATION_STATUSES, assertManualTransition, setsAppliedDate } from './status-rules';
+import { buildFollowUpEmail } from '../email/email-draft';
+import { APPLICATION_STATUSES, assertManualTransition, defaultFollowUp, setsAppliedDate } from './status-rules';
 
 export interface ApplicationListQuery {
   q?: string;
@@ -53,7 +54,13 @@ export class ApplicationsService {
       if (app) {
         await tx.application.update({
           where: { id: app.id },
-          data: { status: to, ...(setsAppliedDate(to) && !app.appliedDate ? { appliedDate: new Date() } : {}) },
+          data: {
+            status: to,
+            // The first time an application is sent, remind the user to follow up a week later (unless they already chose a date).
+            ...(setsAppliedDate(to) && !app.appliedDate
+              ? { appliedDate: new Date(), ...(app.followUpDate ? {} : { followUpDate: defaultFollowUp(new Date()) }) }
+              : {}),
+          },
         });
         await tx.applicationStatusHistory.create({ data: { applicationId: app.id, fromStatus: from, toStatus: to, note: opts.note } });
       }
@@ -97,6 +104,19 @@ export class ApplicationsService {
     });
     if (!app) throw new NotFoundException('Application not found');
     return app;
+  }
+
+  /** Follow-up note text, the recipient the original went to, and whether one is due. */
+  async followUp(id: string) {
+    const app = await this.get(id);
+    const row = await this.prisma.systemSetting.findUnique({ where: { key: 'candidate' } });
+    const name = ((row?.value as { name?: string } | null)?.name ?? '').trim();
+    const to = app.emailDraft?.recipient ?? app.job.applicationEmail ?? null;
+    const note = buildFollowUpEmail({
+      company: app.company, jobTitle: app.jobTitle, appliedDate: app.appliedDate, candidateName: name,
+      originalSubject: app.emailMessages[0]?.subject ?? app.emailDraft?.subject ?? null,
+    });
+    return { to, ...note, due: !!app.followUpDate && app.followUpDate.getTime() <= Date.now() && app.status === 'APPLIED' };
   }
 
   async update(id: string, data: { notes?: string; followUpDate?: Date | null; interviewDate?: Date | null; selectedCvId?: string | null }) {

@@ -97,7 +97,7 @@ export function HealthPage() {
       </Item>
 
       <Item>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card title={<span className="flex items-center gap-2"><StatusIcon status="ok" className="h-4 w-4" />Frontend</span>}>
             <dl className="divide-y divide-slate-100">
               <Row label="Status">Running</Row>

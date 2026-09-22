@@ -75,7 +75,7 @@ export function JobDetailPage() {
       )}
       {analyzing && !job.analysisError && <p className="rounded-md bg-sky-50 p-3 text-sm text-sky-800">The local model is analyzing this job…</p>}
 
-      <div className="grid gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <Card title="AI analysis" className="lg:col-span-2">
           {!a ? <p className="text-sm text-slate-500">Not analyzed yet.</p> : (
             <div className="space-y-4">

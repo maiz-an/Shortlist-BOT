@@ -2,7 +2,7 @@
 
 **A local-first job application assistant.** It finds jobs, removes duplicates, reads each one with a local AI model, picks the right CV, drafts the email, and lets you review and send it from your own Gmail. Everything runs on your computer. No paid APIs, no cloud, nothing is sent without your say-so (auto-apply is off unless you turn it on).
 
-![version](https://img.shields.io/badge/version-1.3.0-265496)
+![version](https://img.shields.io/badge/version-1.4.0-265496)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 ![CI](https://github.com/maiz-an/Shortlist-BOT/actions/workflows/ci.yml/badge.svg)
@@ -13,7 +13,7 @@ Find job  →  Analyze  →  Pick CV  →  Draft email  →  You review  →  Se
 
 ## Features
 
-- **Collect** jobs from free public sources through a pluggable `JobSource` interface (LinkedIn public listings first), rate limited and failure tolerant.
+- **Collect** jobs from free public sources through a pluggable `JobSource` interface (LinkedIn public listings, plus optional Indeed via JobSpy), rate limited and failure tolerant.
 - **Deduplicate** across sources by source ID, URL, normalized company/title/location and description similarity.
 - **Analyze** every job with a local [Ollama](https://ollama.com) model (`qwen3:8b`) behind an `AIProvider` interface, with strictly validated output.
 - **Score** with a deterministic layer (skills, title, experience, location, job type, CV fit, excluded keywords). The AI advises; the backend decides. Score bands are configurable.

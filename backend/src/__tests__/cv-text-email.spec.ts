@@ -1,5 +1,6 @@
 import { cvFacts, estimateYears, sections } from '../modules/cv-profiles/cv-text';
-import { buildFallbackEmail, cleanEmailText, draftProblems, employerFor, experienceAnchors, findAiTells, findOverclaims, findUngrounded, findUngroundedNumbers, formatEmail, gapNote, mostlyIn, pickCloser } from '../modules/email/email-draft';
+import { defaultFollowUp } from '../modules/applications/status-rules';
+import { buildFallbackEmail, buildFollowUpEmail, cleanEmailText, wordCount, draftProblems, employerFor, experienceAnchors, findAiTells, findOverclaims, findUngrounded, findUngroundedNumbers, formatEmail, gapNote, mostlyIn, pickCloser } from '../modules/email/email-draft';
 import { buildEmailPrompt } from '../modules/ai/prompts/email-generation.prompt';
 
 const NOW = new Date('2026-09-22');
@@ -157,5 +158,21 @@ describe('fallback with a real CV line', () => {
   it('ignores a line that would not read naturally', () => {
     const e = buildFallbackEmail({ jobTitle: 'X', company: 'Acme', candidateName: 'Sam', cvName: 'IT', matchedSkills: ['Windows'], yearsExperience: null, evidence: { employer: 'Z', line: 'Experience with Windows' } });
     expect(e.body).not.toContain('At Z');
+  });
+});
+
+describe('follow-up', () => {
+  it('writes a short, plain follow-up note', () => {
+    const n = buildFollowUpEmail({ company: 'Acme', jobTitle: 'Support Engineer', appliedDate: new Date('2026-09-10T10:00:00Z'), candidateName: 'Sam', originalSubject: 'Support Engineer application - Sam' });
+    expect(n.subject).toBe('Re: Support Engineer application - Sam');
+    expect(n.body).toContain('I applied for the Support Engineer role on 10 September');
+    expect(n.body.endsWith('Thanks,\nSam')).toBe(true);
+    expect(findAiTells(n.body)).toEqual([]);
+    expect(wordCount(n.body)).toBeLessThan(60);
+  });
+  it('defaults the follow-up to a week after applying, at midday', () => {
+    const d = defaultFollowUp(new Date('2026-09-10T20:00:00'));
+    expect(d.getDate()).toBe(17);
+    expect(d.getHours()).toBe(12);
   });
 });

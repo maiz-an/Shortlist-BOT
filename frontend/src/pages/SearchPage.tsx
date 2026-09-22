@@ -21,7 +21,7 @@ function ProfileForm({ initial, busy, onSave }: { initial: ProfileInput; busy: b
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onSave({ ...v, location: v.location || null, experienceLevel: v.experienceLevel || null }); }}>
       <Field label="Profile name"><Input required maxLength={100} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} placeholder="Developer" /></Field>
       <Field label="Keywords" hint="Each keyword is searched separately."><ListInput value={v.keywords} onChange={(keywords) => setV({ ...v, keywords })} placeholder="Full Stack Developer, React Developer" /></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Search location"><Input value={v.location ?? ''} onChange={(e) => setV({ ...v, location: e.target.value })} placeholder="Qatar" /></Field>
         <Field label="Preferred locations" hint="Used for location scoring."><ListInput value={v.preferredLocations} onChange={(preferredLocations) => setV({ ...v, preferredLocations })} placeholder="Doha, Qatar" /></Field>
         <Field label="Minimum match score"><Input type="number" min={0} max={100} value={v.minMatchScore} onChange={(e) => setV({ ...v, minMatchScore: Number(e.target.value) })} /></Field>
@@ -85,7 +85,7 @@ export function SearchPage() {
       {profiles.isLoading ? <Loading /> : profiles.error ? <ErrorState error={profiles.error} onRetry={() => profiles.refetch()} /> : !profiles.data?.length ? (
         <EmptyState title="No search profiles" hint="Create one with keywords and a location to start collecting jobs." action={<Button variant="primary" onClick={() => setEditing('new')}>New profile</Button>} />
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {profiles.data.map((p) => (
             <Card key={p.id} title={<span className="flex items-center gap-2">{p.name}{!p.enabled && <Badge>Disabled</Badge>}</span>}
               actions={<><Button disabled={!p.enabled || running} onClick={() => start([p.id])}>Run</Button><Button onClick={() => setEditing(p)}>Edit</Button><Button variant="ghost" onClick={() => setDeleting(p)}>Delete</Button></>}>

@@ -17,6 +17,10 @@ export const useApplications = (f: AppFilters) =>
     placeholderData: keepPreviousData,
   });
 
+export interface FollowUpNote { to: string | null; subject: string; body: string; due: boolean }
+export const useFollowUp = (id: string, enabled: boolean) =>
+  useQuery({ queryKey: ['applications', 'follow-up', id], enabled, queryFn: () => apiClient.get<FollowUpNote>(`/applications/${id}/follow-up`) });
+
 export const useApplication = (id: string) =>
   useQuery({ queryKey: ['applications', 'detail', id], queryFn: () => apiClient.get<ApplicationDetail>(`/applications/${id}`) });
 

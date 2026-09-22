@@ -23,6 +23,14 @@
   input[type='checkbox'] { @apply h-4 w-4 rounded border-slate-300; accent-color: rgb(var(--brand-600)); }
   ::selection { background: rgb(var(--brand-200) / 0.7); }
   code { @apply rounded bg-slate-100 px-1 py-0.5 text-[0.85em]; }
+
+  /* Slim, themed scrollbar everywhere a box scrolls (page, tables, modals, the mobile menu). */
+  * { scrollbar-width: thin; scrollbar-color: rgb(var(--slate-300)) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background-color: rgb(var(--slate-300)); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--slate-400)); }
+  ::-webkit-scrollbar-corner { background: transparent; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -111,3 +111,29 @@ describe('reason text', () => {
     expect(r).toContain('None of your listed skills are named in the ad.');
   });
 });
+
+describe('role level', () => {
+  const cv = { skills: FS_CV, preferredJobKeywords: ['Full Stack Developer'], excludedKeywords: [] as string[] };
+  const mk = (title: string, o: Partial<ScoreInput> = {}): ScoreInput => ({
+    job: { title, description: 'React, TypeScript, NestJS, PostgreSQL, Git.', location: 'Doha, Qatar', jobType: 'FULL_TIME' },
+    cv, constraints: { excludedKeywords: [], preferredJobTypes: ['FULL_TIME'], preferredLocations: ['Qatar'], keywords: ['Full Stack Developer'] },
+    ai: { matchScore: 80, missingSkills: [], experienceCompatible: true, locationCompatible: true },
+    candidateYears: 5, cvRelevance: 1, ...o,
+  });
+  it('an internship is a poor use of an application for someone with 5 years', () => {
+    const normal = calculateScore(mk('Full Stack Developer'));
+    const intern = calculateScore(mk('Software Engineering Intern (Summer 2027)'));
+    expect(normal.levelNote).toBeNull();
+    expect(intern.levelNote).toContain('internship or entry-level');
+    expect(normal.score - intern.score).toBeGreaterThanOrEqual(30);
+    expect(recommendationFor(intern.score, T, [], { recommendation: 'APPLY' })).not.toBe('APPLY');
+  });
+  it('a real beginner is not penalised for an internship', () => {
+    expect(calculateScore(mk('Software Engineering Intern', { candidateYears: 0 })).levelNote).toBeNull();
+    expect(calculateScore(mk('Software Engineer - New Grad')).levelNote).toContain('entry-level');
+  });
+  it('a senior title with no stated years is a mild stretch, but not when the ad states the years', () => {
+    expect(calculateScore(mk('Senior Full Stack Developer')).levelNote).toContain('senior or lead');
+    expect(calculateScore(mk('Senior Full Stack Developer', { job: { ...mk('x').job, title: 'Senior Full Stack Developer', description: 'React. 4+ years of experience.' } })).levelNote).toBeNull();
+  });
+});

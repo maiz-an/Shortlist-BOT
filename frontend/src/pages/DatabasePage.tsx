@@ -44,7 +44,7 @@ function RowModal({ table, id, onClose }: { table: string; id: string | null; on
       {isLoading ? <Loading rows={3} /> : error || !data ? <ErrorState error={error} /> : (
         <dl className="divide-y divide-slate-100 text-sm">
           {Object.entries(data).map(([k, v]) => (
-            <div key={k} className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
+            <div key={k} className="grid grid-cols-1 gap-1 py-2 sm:grid-cols-3 sm:gap-4">
               <dt className="font-medium text-slate-500">{k}</dt>
               <dd className="min-w-0 sm:col-span-2">
                 {v === null ? <span className="text-slate-400">null</span> : typeof v === 'object' ? (
@@ -110,7 +110,7 @@ export function DatabasePage() {
         </Button>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
         {/* Table list */}
         <nav aria-label="Tables" className="min-h-0 lg:overflow-y-auto">
           <div className="lg:hidden">

@@ -33,6 +33,12 @@ export class ApplicationsController {
     return this.apps.list(q);
   }
 
+  /** A ready-to-send follow-up note for an application that has had no reply. */
+  @Get(':id/follow-up')
+  followUp(@Param('id', ParseUUIDPipe) id: string) {
+    return this.apps.followUp(id);
+  }
+
   @Get(':id')
   get(@Param('id', ParseUUIDPipe) id: string) {
     return this.apps.get(id);

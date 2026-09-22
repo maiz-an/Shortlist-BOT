@@ -146,6 +146,8 @@ export class JobsService {
     if (q.minScore !== undefined) and.push({ analysis: { is: { finalMatchScore: { gte: q.minScore } } } });
     if (q.recommendation) and.push({ analysis: { is: { recommendation: q.recommendation as never } } });
     if (q.sourceKey) and.push({ sourceListings: { some: { jobSource: { key: q.sourceKey } } } });
+    // Sorting by match only makes sense for analysed jobs; otherwise unscored jobs (empty score) would sit above the best ones.
+    if (q.sort === 'matchScore') and.push({ analysis: { isNot: null } });
     const where: Prisma.JobWhereInput = and.length ? { AND: and } : {};
     const dir = q.order ?? 'desc';
     const orderBy: Prisma.JobOrderByWithRelationInput =

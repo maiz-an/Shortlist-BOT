@@ -39,6 +39,7 @@ export const SETTING_DEFAULTS = {
   scheduler: { enabled: false, intervalHours: 6, profileIds: [], sourceKeys: [] } as SchedulerSettings,
   candidate: { name: '', email: '', phone: '' } as CandidateSettings,
   auto_apply: { enabled: false, minScore: 80, dailyLimit: 10 } as AutoApplySettings,
+  scoring_version: { version: 0 },
   pipeline: { defaultMinScore: 50, fetchDescriptions: true, maxDescriptionFetches: 25 },
 };
 

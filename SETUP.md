@@ -14,6 +14,27 @@ The app is private to your computer by default. To reach it from your phone (exp
 
 Notes: the laptop must be awake. A temporary public tunnel link is possible but not recommended; if you use one, the passcode is your only protection. Never open ports on your router.
 
+## Optional: Indeed listings (great for Qatar and the Gulf)
+
+LinkedIn works out of the box. To also collect **Indeed** listings (Indeed Qatar has many more local jobs, and some ads include an email address), install the open-source [JobSpy](https://github.com/speedyapply/JobSpy) library once:
+
+```bash
+pip install python-jobspy
+pip install -U numpy pandas      # only needed on Python 3.13 or newer
+```
+
+Then open **Sources** and switch **Indeed (via JobSpy)** on, and edit a search profile to include it. Optional settings in `backend/.env`: `INDEED_COUNTRY=Qatar` (default) and `PYTHON_BIN=` if Python is not on your PATH. Without JobSpy the source simply reports how to install it and nothing else is affected. It reads public pages gently (one small request per search, no login, no proxy), but Indeed's terms restrict automated access, so use it at your own discretion and keep searches modest.
+
+## Optional: GulfTalent listings (Qatar) with a free Apify account
+
+GulfTalent, Bayt and Naukrigulf block automated access, so the app uses a ready-made [Apify](https://apify.com) scraper for GulfTalent and only calls Apify's public API. Apify's free plan includes $5 of usage each month with no card, and this scraper costs about $0.7 per 1,000 jobs, so it comfortably covers a personal search.
+
+1. Create a free account at apify.com and copy your API token from Settings, Integrations.
+2. Add it to `backend/.env`: `APIFY_TOKEN=your-token` (never share or commit it).
+3. Restart the app, open **Sources**, switch **GulfTalent (via Apify)** on, and include it in a search profile.
+
+Each search fetches up to 25 jobs per keyword with full descriptions, apply links and recruiter emails when GulfTalent shows them. If the monthly credit runs out, the source says so and pauses until next month. Third-party scrapers can break; if it stops working, set `APIFY_GULFTALENT_ACTOR` to another GulfTalent actor.
+
 ## Ports
 
 | What | Port | Change it with |

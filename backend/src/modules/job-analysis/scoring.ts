@@ -22,6 +22,8 @@ export interface ScoreResult {
   experienceRequiredYears: number | null;
   experienceCompatible: boolean;
   locationCompatible: boolean;
+  /** Plain-words note when the role is pitched well below or above the candidate's level. */
+  levelNote: string | null;
 }
 
 export const WEIGHTS = { skills: 35, title: 20, experience: 10, location: 10, employmentType: 5, cvRelevance: 10, ai: 10 } as const;
@@ -90,6 +92,20 @@ export function calculateScore(i: ScoreInput): ScoreResult {
   const titleHit = excluded.some((k) => containsTerm(i.job.title, k));
   const penalty = excludedHits.length ? (titleHit ? 50 : 25) : 0;
 
+  // A role pitched below (intern, trainee) or above (senior, lead) the candidate's real level is a poor use of an application.
+  const years = i.candidateYears;
+  const beginner = /\b(interns?|internship|trainee|apprentice(?:ship)?|graduate (?:programme|program|scheme)|new[- ]grad(?:uate)?s?|(?:fresh|recent) graduates?|fresh(?:er)?s?|entry[- ]level)\b/i.test(i.job.title) || i.job.jobType === 'INTERNSHIP';
+  const seniorTitle = /\b(senior|sr\.?|lead|principal|staff|head of|director|manager)\b/i.test(i.job.title);
+  let levelPenalty = 0;
+  let levelNote: string | null = null;
+  if (years !== null && beginner && years >= 2) {
+    levelPenalty = 35;
+    levelNote = `This is an internship or entry-level role and you have about ${years} years of experience.`;
+  } else if (years !== null && seniorTitle && requiredYears === null && years < 6) {
+    levelPenalty = 8;
+    levelNote = `The title is a senior or lead role and the ad states no years; you have about ${years}, so it may be a stretch.`;
+  }
+
   const breakdown = {
     skills: skills * WEIGHTS.skills,
     title: title * WEIGHTS.title,
@@ -99,11 +115,12 @@ export function calculateScore(i: ScoreInput): ScoreResult {
     cvRelevance: (i.cv ? clamp01(i.cvRelevance) : 0) * WEIGHTS.cvRelevance,
     ai: (i.ai.matchScore / 100) * WEIGHTS.ai,
     excludedPenalty: -penalty,
+    levelPenalty: -levelPenalty,
   };
   const round = Object.fromEntries(Object.entries(breakdown).map(([k, v]) => [k, Math.round(v * 10) / 10]));
   const score = Math.max(0, Math.min(100, Math.round(Object.values(breakdown).reduce((a, b) => a + b, 0))));
 
-  return { score, breakdown: round, matchedSkills, missingSkills, excludedHits, experienceRequiredYears: requiredYears, experienceCompatible, locationCompatible };
+  return { score, breakdown: round, matchedSkills, missingSkills, excludedHits, experienceRequiredYears: requiredYears, experienceCompatible, locationCompatible, levelNote };
 }
 
 export type ScoreLabel = 'poor' | 'possible' | 'good' | 'strong' | 'excellent';

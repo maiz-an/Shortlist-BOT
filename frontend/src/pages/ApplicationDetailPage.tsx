@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useApplication, useSetStatus, useUpdateApplication } from '../features/applications/api';
+import { useApplication, useFollowUp, useSetStatus, useUpdateApplication } from '../features/applications/api';
 import { EmailComposer } from '../features/applications/EmailComposer';
 import { MANUAL_STATUSES } from '../types';
 import type { JobStatus } from '../types';
@@ -43,9 +43,9 @@ export function ApplicationDetailPage() {
       <p><Link to="/applications" className="text-sm text-brand-600 hover:underline">← Applications</Link></p>
       <PageHeader title={app.jobTitle} subtitle={`${app.company}${app.location ? ` · ${app.location}` : ''}`} actions={<Link className="rounded-md border border-slate-300 bg-card px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" to={`/jobs/${app.jobId}`}>View job</Link>} />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card title="Tracker" className="lg:col-span-2">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Status"><div className="flex items-center gap-2"><StatusBadge status={app.status} /></div></Field>
             <div className="flex items-end gap-2">
               <div className="flex-1"><Field label="Change status"><Select value={next} onChange={(e) => setNext(e.target.value as JobStatus)}><option value="">Select…</option>{MANUAL_STATUSES.filter((s) => s !== app.status).map((s) => <option key={s}>{s}</option>)}</Select></Field></div>
@@ -72,6 +72,8 @@ export function ApplicationDetailPage() {
 
       <EmailComposer app={app} />
 
+      {app.status === 'APPLIED' && <FollowUpCard id={app.id} onSnooze={(iso) => update.mutate({ id: app.id, data: { followUpDate: iso } }, { onSuccess: () => toast.success('Reminder set for next week'), onError: (e) => toast.error(errMsg(e)) })} />}
+
       {app.emailMessages.length > 0 && (
         <Card title="Sent messages">
           <ul className="divide-y divide-slate-100 text-sm">
@@ -90,5 +92,31 @@ export function ApplicationDetailPage() {
         </ol>
       </Card>
     </div>
+  );
+}
+
+/** A ready-to-send follow-up note for an application with no reply yet. It opens in the user's own mail app. */
+function FollowUpCard({ id, onSnooze }: { id: string; onSnooze: (iso: string) => void }) {
+  const note = useFollowUp(id, true);
+  const toast = useToast();
+  if (!note.data) return null;
+  const n = note.data;
+  const mailto = `mailto:${n.to ?? ''}?subject=${encodeURIComponent(n.subject)}&body=${encodeURIComponent(n.body)}`;
+  const nextWeek = () => { const d = new Date(); d.setDate(d.getDate() + 7); d.setHours(12, 0, 0, 0); return d.toISOString(); };
+  return (
+    <Card title={n.due ? 'Time to follow up' : 'Follow-up note'}>
+      <p className="mb-3 text-sm text-slate-600">
+        {n.due ? 'A week has passed with no reply. A short, polite nudge is normal and often gets an answer.' : 'Ready when you need it. A follow-up a week after applying is normal.'}
+      </p>
+      <pre className="whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 font-sans text-sm text-slate-800">{n.body}</pre>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <a className="inline-flex items-center rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700" href={mailto}>Open in my mail app</a>
+        <Button onClick={() => navigator.clipboard.writeText(`${n.subject}
+
+${n.body}`).then(() => toast.success('Copied'), () => toast.error('Could not copy'))}>Copy text</Button>
+        <Button onClick={() => onSnooze(nextWeek())}>I followed up, remind me next week</Button>
+      </div>
+      {!n.to && <p className="mt-2 text-xs text-amber-700">No email address is saved for this job, so add the recipient yourself.</p>}
+    </Card>
   );
 }

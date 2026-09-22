@@ -183,6 +183,7 @@ export interface DashboardData {
   today: { newJobs: number; strongMatches: number; pendingReview: number; applicationsSent: number };
   responseRate: number;
   lastRun: SearchRun | null;
+  followUps: { due: number; items: { id: string; company: string; jobTitle: string; followUpDate: string }[] };
   topReview: { id: string; title: string; company: string; location: string | null; analysis: { finalMatchScore: number; recommendedCv: { name: string } | null } | null }[];
 }
 
