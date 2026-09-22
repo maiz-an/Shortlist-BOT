@@ -28,6 +28,13 @@ export interface AutoApplySettings {
   dailyLimit: number;
 }
 
+export interface WhatsAppNotifySettings {
+  enabled: boolean;
+  /** Digits only, with country code, no + or spaces (e.g. "97430000000"). Defaults to your own connected number. */
+  phone: string;
+  minScore: number;
+}
+
 export const SETTING_DEFAULTS = {
   match_score_thresholds: {
     poor: [0, 49],
@@ -39,6 +46,7 @@ export const SETTING_DEFAULTS = {
   scheduler: { enabled: false, intervalHours: 6, profileIds: [], sourceKeys: [] } as SchedulerSettings,
   candidate: { name: '', email: '', phone: '' } as CandidateSettings,
   auto_apply: { enabled: false, minScore: 80, dailyLimit: 10 } as AutoApplySettings,
+  whatsapp_notify: { enabled: false, phone: '', minScore: 70 } as WhatsAppNotifySettings,
   scoring_version: { version: 0 },
   pipeline: { defaultMinScore: 50, fetchDescriptions: true, maxDescriptionFetches: 25 },
 };

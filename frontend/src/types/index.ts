@@ -201,6 +201,16 @@ export interface Settings {
   candidate: { name: string; email: string; phone: string };
   auto_apply: { enabled: boolean; minScore: number; dailyLimit: number };
   pipeline: { defaultMinScore: number; fetchDescriptions: boolean; maxDescriptionFetches: number };
+  whatsapp_notify: { enabled: boolean; phone: string; minScore: number };
+}
+
+export type WhatsAppSessionStatus =
+  | 'created' | 'initializing' | 'qr_ready' | 'authenticating' | 'ready' | 'disconnected' | 'action_required' | 'failed';
+
+export interface WhatsAppStatus {
+  configured: boolean;
+  reachable: boolean;
+  session: { status: WhatsAppSessionStatus; phone: string | null; pushName: string | null } | null;
 }
 
 export interface EmailStatus {

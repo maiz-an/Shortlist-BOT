@@ -2,6 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AIUnavailableError } from '../ai/ai-provider';
 import { AutoApplyService } from '../email/auto-apply.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.module';
 import { AnalysisService } from './analysis.service';
 
 /** Sequential in-process queue: the local LLM handles one job at a time. */
@@ -17,6 +18,7 @@ export class AnalysisQueue implements OnApplicationBootstrap {
     private readonly analysis: AnalysisService,
     private readonly prisma: PrismaService,
     private readonly autoApply: AutoApplyService,
+    private readonly whatsapp: WhatsAppService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -47,11 +49,14 @@ export class AnalysisQueue implements OnApplicationBootstrap {
         this.current = id;
         try {
           const before = await this.prisma.job.findUnique({ where: { id }, select: { status: true } });
-          await this.analysis.analyze(id);
+          const result = await this.analysis.analyze(id);
           this.lastError = null;
+          // A job worth reading gets an email ready to go, whatever its status.
+          await this.autoApply.maybeAutoDraft(id);
           // Only a job that just moved into REVIEW may be auto-applied; re-analysing one you already handle never sends.
-          const after = await this.prisma.job.findUnique({ where: { id }, select: { status: true } });
+          const after = await this.prisma.job.findUnique({ where: { id }, select: { status: true, title: true, company: true } });
           if (before?.status !== 'REVIEW' && after?.status === 'REVIEW') await this.autoApply.maybeApply(id);
+          if (result && after) await this.whatsapp.notifyIfMatch({ id, title: after.title, company: after.company }, result.finalMatchScore);
         } catch (err) {
           this.lastError = (err as Error).message;
           if (err instanceof AIUnavailableError) {

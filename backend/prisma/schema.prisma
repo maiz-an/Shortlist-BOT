@@ -241,6 +241,7 @@ model JobAnalysis {
   recommendation       Recommendation
   reason               String?
   rawAiResponse        Json? // full AI response, kept for debugging malformed/edge-case output
+  whatsappNotifiedAt   DateTime? // set once a WhatsApp alert is sent for this job, so it is never sent twice
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

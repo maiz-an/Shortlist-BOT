@@ -32,6 +32,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private async ensureSchema() {
     await this.$executeRawUnsafe('ALTER TABLE "CVProfile" ADD COLUMN IF NOT EXISTS "textContent" TEXT');
     await this.$executeRawUnsafe('ALTER TABLE "CVProfile" ADD COLUMN IF NOT EXISTS "experienceYears" DOUBLE PRECISION');
+    await this.$executeRawUnsafe('ALTER TABLE "JobAnalysis" ADD COLUMN IF NOT EXISTS "whatsappNotifiedAt" TIMESTAMP(3)');
   }
 
   async onModuleDestroy() {

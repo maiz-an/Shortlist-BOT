@@ -27,3 +27,7 @@ logs/
 
 # personal documents - never commit
 CV/
+
+# OpenWA (optional WhatsApp gateway): its own separate git repo, own secrets and live
+# session data. Never let it become part of this repo. See SETUP.md.
+services/openwa/

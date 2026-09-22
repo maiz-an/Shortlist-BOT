@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useProfiles, useSources } from '../features/search/api';
-import { useAiStatus, useSaveSetting, useSettings } from '../features/settings/api';
+import {
+  useAiStatus, useSaveSetting, useSettings, useWhatsAppConnect, useWhatsAppDisconnect, useWhatsAppQr, useWhatsAppStatus, useWhatsAppTest,
+} from '../features/settings/api';
 import type { Settings } from '../types';
 import { Badge, Button, Card, ErrorState, Field, Input, Loading, PageHeader, Toggle, cx, errMsg, useToast } from '../components/ui';
 import { useEmailStatus } from '../features/settings/api';
@@ -28,6 +30,7 @@ const TABS = [
   { id: 'auto-apply', label: 'Auto-apply' },
   { id: 'matching', label: 'Matching' },
   { id: 'search', label: 'Automatic search' },
+  { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'system', label: 'System' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -44,6 +47,7 @@ export function SettingsPage() {
   const scheduler = useDraft('scheduler', data?.scheduler);
   const pipeline = useDraft('pipeline', data?.pipeline);
   const autoApply = useDraft('auto_apply', data?.auto_apply);
+  const waNotify = useDraft('whatsapp_notify', data?.whatsapp_notify);
   const gmail = useEmailStatus();
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
@@ -197,6 +201,12 @@ export function SettingsPage() {
             </>
           )}
 
+          {tab === 'whatsapp' && (
+            <>
+                    <WhatsAppSection notify={waNotify} />
+            </>
+          )}
+
           {tab === 'system' && (
             <>
                     <Card title="Local AI">
@@ -219,5 +229,143 @@ export function SettingsPage() {
           )}
         </motion.div>
     </div>
+  );
+}
+
+/**
+ * Optional WhatsApp alerts through a self-hosted OpenWA instance (see SETUP.md, services/openwa).
+ * Off this machine, or on anyone else's, `configured`/`reachable` are simply false and this renders
+ * one calm, skippable line - never an error.
+ */
+function WhatsAppSection({ notify }: { notify: ReturnType<typeof useDraft<'whatsapp_notify'>> }) {
+  const status = useWhatsAppStatus();
+  const connect = useWhatsAppConnect();
+  const disconnect = useWhatsAppDisconnect();
+  const toast = useToast();
+  const s = status.data;
+  const showQr = s?.session?.status === 'qr_ready';
+  const qr = useWhatsAppQr(showQr);
+  const connectedPhone = s?.session?.phone;
+  // Once we learn the connected number, default the alert phone to it (only while the field is still empty).
+  useEffect(() => {
+    if (notify.v && !notify.v.phone && connectedPhone) notify.setV({ ...notify.v, phone: connectedPhone });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectedPhone, notify.v?.phone]);
+
+  if (status.isLoading) return <Card title="WhatsApp"><Loading rows={2} /></Card>;
+
+  if (!s?.configured) {
+    return (
+      <Card title="WhatsApp alerts (optional)">
+        <p className="text-sm text-slate-600">
+          Not set up on this machine. This is entirely optional - skip it if you don't want WhatsApp alerts.
+          To enable it, set up a local OpenWA instance and add its address and key to <code>backend/.env</code>; see SETUP.md.
+        </p>
+      </Card>
+    );
+  }
+
+  if (!s.reachable) {
+    return (
+      <Card title="WhatsApp alerts">
+        <p className="flex items-center gap-2 text-sm"><Badge className="bg-slate-100 text-slate-600">Not running</Badge><span>OpenWA is configured but not reachable right now.</span></p>
+        <p className="mt-2 text-xs text-slate-500">Start it (see SETUP.md), then reopen this tab.</p>
+      </Card>
+    );
+  }
+
+  const connected = s.session?.status === 'ready';
+  const connecting = s.session && ['created', 'initializing', 'authenticating'].includes(s.session.status);
+
+  return (
+    <>
+    <Card title="WhatsApp alerts">
+      {connected ? (
+        <>
+          <p className="flex items-center gap-2 text-sm">
+            <Badge className="bg-emerald-100 text-emerald-700">Connected</Badge>
+            <span>Sending from <strong className="font-semibold text-slate-900">+{s.session?.phone}</strong>{s.session?.pushName ? ` (${s.session.pushName})` : ''}</span>
+          </p>
+          <Button className="mt-4" loading={disconnect.isPending} onClick={() => disconnect.mutate(undefined, { onSuccess: () => toast.success('Disconnected'), onError: (e) => toast.error(errMsg(e)) })}>
+            Disconnect
+          </Button>
+        </>
+      ) : showQr ? (
+        <>
+          <p className="mb-3 text-sm text-slate-600">Scan this with WhatsApp on your phone: Settings → Linked devices → Link a device.</p>
+          {qr.data?.qrCode ? (
+            <img src={qr.data.qrCode} alt="WhatsApp QR code" className="h-56 w-56 rounded-md border border-slate-200 bg-white p-2" />
+          ) : (
+            <Loading rows={2} />
+          )}
+          <p className="mt-2 text-xs text-slate-500">This updates itself - no need to refresh.</p>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-slate-600">
+            {connecting ? 'Starting up…' : 'Not connected yet. Link your WhatsApp to receive alerts for strong matches.'}
+          </p>
+          <Button
+            className="mt-4" variant="primary" loading={connect.isPending || !!connecting}
+            onClick={() => connect.mutate(undefined, { onError: (e) => toast.error(errMsg(e)) })}
+          >
+            Connect WhatsApp
+          </Button>
+        </>
+      )}
+    </Card>
+
+      {(connected || showQr || connecting) && notify.v && <AlertSettingsCard notify={notify} connected={connected} />}
+    </>
+  );
+}
+
+function AlertSettingsCard({ notify, connected }: { notify: ReturnType<typeof useDraft<'whatsapp_notify'>>; connected: boolean }) {
+  const toast = useToast();
+  const test = useWhatsAppTest();
+  const v = notify.v!;
+
+  return (
+    <Card title="Alert settings" className="mt-4">
+      <p className="text-sm text-slate-600">
+        Alerts are sent to <strong className="font-semibold text-slate-900">{v.phone ? `+${v.phone}` : '(no number set)'}</strong>.
+      </p>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-slate-900">Message me for strong matches</p>
+          <p className="text-xs text-slate-500">Sent once per job, the first time it reaches this score.</p>
+        </div>
+        <Toggle
+          checked={v.enabled}
+          disabled={notify.saving}
+          label="Message me for strong matches"
+          onChange={(enabled) => notify.saveNow({ ...v, enabled }, enabled ? 'WhatsApp alerts are ON' : 'WhatsApp alerts are OFF')}
+        />
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Send to (WhatsApp number)" hint="Digits only, with country code, e.g. 97430264760. Defaults to your own connected number.">
+          <Input value={v.phone} onChange={(e) => notify.setV({ ...v, phone: e.target.value.replace(/\D/g, '') })} />
+        </Field>
+        <Field label="Minimum match score" hint="Only jobs at or above this score send an alert.">
+          <Input
+            type="number" min={50} max={100} value={v.minScore}
+            onChange={(e) => notify.setV({ ...v, minScore: Math.max(50, Math.min(100, Number(e.target.value))) })}
+          />
+        </Field>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant="primary" loading={notify.saving} onClick={notify.save}>Save alert settings</Button>
+        <Button
+          loading={test.isPending} disabled={!connected || !v.phone}
+          onClick={() => test.mutate(v.phone, {
+            onSuccess: (r) => (r.ok ? toast.success(`Test message sent to +${v.phone}`) : toast.error(r.reason ?? 'Could not send')),
+            onError: (e) => toast.error(errMsg(e)),
+          })}
+        >
+          Send test message
+        </Button>
+      </div>
+      {!connected && <p className="mt-2 text-xs text-slate-500">Connect WhatsApp above before sending a test.</p>}
+    </Card>
   );
 }

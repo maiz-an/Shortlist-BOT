@@ -21,6 +21,11 @@ const schemas: Record<SettingKey, z.ZodTypeAny> = {
     minScore: z.number().int().min(50).max(100),
     dailyLimit: z.number().int().min(1).max(50),
   }),
+  whatsapp_notify: z.object({
+    enabled: z.boolean(),
+    phone: z.string().max(20).regex(/^\d*$/, 'Digits only, with country code, no + or spaces'),
+    minScore: z.number().int().min(50).max(100),
+  }),
   scoring_version: z.object({ version: z.number().int().min(0) }),
   pipeline: z.object({
     defaultMinScore: z.number().int().min(0).max(100),

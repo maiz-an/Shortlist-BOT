@@ -3,6 +3,17 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.5.0] - 2026-09-22
+
+### Fixed
+- **Mobile browsers no longer zoom in when you tap a text field.** Every input, dropdown and text box rendered at 14px, and iOS/Android auto-zoom the page on focus whenever a field is under 16px - now they render at 16px on narrow screens (still 14px from tablet width up, matching the rest of the app).
+- **A restart could silently force a fresh WhatsApp scan.** Stopping the app force-killed OpenWA's browser engine mid-write, sometimes corrupting the saved WhatsApp login. `stop.cmd` now asks OpenWA to close the session cleanly first (with the old force-kill still running afterwards as a safety net either way). Shortlist BOT also now reconnects an already-linked session by itself in the background after every start, retrying for about 40 seconds since OpenWA is a separate process that is often still starting up - so linking WhatsApp once should now survive normal restarts.
+
+### Added
+- **WhatsApp alerts (optional).** A ready-to-send email is one thing; now the app can also message you on WhatsApp. It talks to a small, free, self-hosted gateway ([OpenWA](https://github.com/rmyndharis/OpenWA)) that lives in `services/openwa/` - its own separate git checkout, git-ignored on purpose because it holds a live WhatsApp session. Off by default and fully skippable: on a machine where it is not set up, **Settings → WhatsApp** just says so calmly, with no error. `start.cmd` / `stop.cmd` start and stop it together with the rest of the app when it is present. See SETUP.md.
+- **Settings → WhatsApp now shows both numbers plainly**: which number alerts are sent *from* (your connected phone) and which number they go *to* (configurable, defaults to the same one), plus a **Send test message** button that tries a real send right away and reports honestly if it failed and why (not linked yet, wrong number, etc.) - so you can check it works before relying on it.
+- **Emails are pre-written, not just on demand.** As soon as a job is analysed and scores 50% or higher, the app writes its email straight away and saves it as a draft - no need to open the job and click Generate first. It never overwrites a draft you already have, including one you edited by hand, and it never sends anything by itself.
+
 ## [1.4.0] - 2026-09-22
 
 ### Fixed

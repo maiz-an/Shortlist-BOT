@@ -1,6 +1,6 @@
 {
   "name": "shortlist-bot-backend",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Shortlist BOT backend: NestJS API for job collection, local AI analysis, Gmail sending and tracking",
   "private": true,
   "scripts": {

@@ -11,7 +11,7 @@ rem    start.cmd hidden          for shortcuts: no console output at all, opens 
 rem                              and shows a message box if something goes wrong
 rem    (options can be combined, e.g.  start.cmd remote hidden)
 rem
-rem  Starts, only if not already running: built-in database (if you use it),
+rem  Starts, only if not already running: built-in database (if you use it), WhatsApp alerts (if set up),
 rem  Ollama, the API (5871) and the app (5870).
 rem ============================================================================
 setlocal EnableDelayedExpansion
@@ -85,6 +85,15 @@ if errorlevel 1 (
     call :hidden "!OLLAMA!" serve
   ) else echo  [!] Ollama not found. Jobs cannot be analyzed until you install it ^(https://ollama.com^).
 ) else echo  [=] Ollama already running
+
+rem --- OpenWA (optional WhatsApp alerts, see SETUP.md). The app works fully without it. ---
+if exist "services\openwa\package.json" if exist "services\openwa\node_modules" if exist "services\openwa\.env" (
+  call :listening 2785
+  if errorlevel 1 (
+    echo  [+] Starting WhatsApp alerts ^(OpenWA^)...
+    call :hidden "%~dp0scripts\run-openwa.cmd"
+  ) else echo  [=] WhatsApp alerts already running
+) else echo  [ ] WhatsApp alerts: not set up ^(optional, see SETUP.md^)
 
 rem --- API and app ---
 call :listening 5871

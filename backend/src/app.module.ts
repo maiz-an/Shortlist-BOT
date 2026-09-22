@@ -17,6 +17,7 @@ import { JobSourcesModule } from './modules/job-sources/job-sources.module';
 import { JobsModule } from './modules/jobs/jobs.controller';
 import { SearchModule } from './modules/search/search.module';
 import { SettingsModule } from './modules/settings/settings.controller';
+import { WhatsAppModule } from './modules/whatsapp/whatsapp.module';
 import { PrismaModule } from './prisma/prisma.service';
 
 @Module({
@@ -36,6 +37,7 @@ import { PrismaModule } from './prisma/prisma.service';
     DashboardModule,
     HealthModule,
     DatabaseModule,
+    WhatsAppModule,
   ],
   controllers: [AppController],
   providers: [

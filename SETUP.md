@@ -35,6 +35,30 @@ GulfTalent, Bayt and Naukrigulf block automated access, so the app uses a ready-
 
 Each search fetches up to 25 jobs per keyword with full descriptions, apply links and recruiter emails when GulfTalent shows them. If the monthly credit runs out, the source says so and pauses until next month. Third-party scrapers can break; if it stops working, set `APIFY_GULFTALENT_ACTOR` to another GulfTalent actor.
 
+## Optional: WhatsApp alerts
+
+Shortlist BOT can send you a WhatsApp message through a small, free, self-hosted gateway called [OpenWA](https://github.com/rmyndharis/OpenWA), which lives in `services/openwa/` (its own separate git checkout - never part of this repo, and git-ignored on purpose because it holds your live WhatsApp session). This is entirely optional; skip it and everything else works the same.
+
+Why self-hosted rather than an official API: WhatsApp's official Business API needs a Meta business account and per-conversation fees. OpenWA runs the same WhatsApp Web that a browser uses, for free, but it is unofficial, so there is a real (if small) chance of the linked number being restricted. **Use a spare number you can afford to lose, never your main one.**
+
+**Set it up once:**
+```bash
+git clone https://github.com/rmyndharis/OpenWA.git services/openwa
+cd services/openwa
+cp .env.minimal .env
+npm ci
+npx puppeteer browsers install chrome
+```
+Then add two lines to `.env` (inside `services/openwa`): `HOST=127.0.0.1` (keeps it off your network, not just this app) and a strong `API_MASTER_KEY` (any long random string - this becomes its admin API key).
+
+**Connect it to Shortlist BOT:**
+1. Add the same key to `backend/.env`: `OPENWA_URL=http://127.0.0.1:2785` and `OPENWA_API_KEY=` (the same value you put in `services/openwa/.env`).
+2. Restart Shortlist BOT with `start.cmd` / `./start.sh` - it now also starts OpenWA in the background if it's set up, and skips it silently if it is not (so this never breaks the app for someone who has not set it up).
+3. Open **Settings → WhatsApp**. If OpenWA is running you'll see a **Connect WhatsApp** button and a QR code; scan it with WhatsApp on your phone (Settings → Linked devices → Link a device).
+4. Under **Alert settings**, turn the switch on, check the number in **Send to** (it defaults to your own connected number - change it if you want alerts sent somewhere else), and click **Send test message** to confirm it actually arrives before relying on it.
+
+If `services/openwa` does not exist, or OpenWA is not running, the WhatsApp tab just says so calmly - it is skippable on every other machine that runs this project. Once linked, a normal restart (`stop.cmd` / `start.cmd`) reconnects it by itself within about 40 seconds; only rescan the QR if the app tells you to.
+
 ## Ports
 
 | What | Port | Change it with |

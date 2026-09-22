@@ -6,6 +6,7 @@ import { EmailModule } from '../email/email.module';
 import { JobsModule } from '../jobs/jobs.controller';
 import { JobsService } from '../jobs/jobs.service';
 import { SettingsModule } from '../settings/settings.controller';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { AnalysisQueue } from './analysis-queue.service';
 import { AnalysisService } from './analysis.service';
 
@@ -72,7 +73,7 @@ export class JobAnalysisController {
 }
 
 @Module({
-  imports: [JobsModule, ApplicationsModule, SettingsModule, EmailModule],
+  imports: [JobsModule, ApplicationsModule, SettingsModule, EmailModule, WhatsAppModule],
   controllers: [JobAnalysisController],
   providers: [AnalysisService, AnalysisQueue],
   exports: [AnalysisQueue, AnalysisService],

@@ -34,8 +34,10 @@ export function Button({ variant = 'secondary', loading, className, children, di
   );
 }
 
+// text-base (16px) on the input itself stops iOS/Android from auto-zooming the page on focus; text-sm from
+// sm: up keeps it matching the rest of the UI once the device is wide enough that zoom-on-focus can't happen.
 const fieldCls =
-  'block min-h-9 w-full rounded-md border border-slate-300 bg-card px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 hover:border-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500';
+  'block min-h-9 w-full rounded-md border border-slate-300 bg-card px-3 py-1.5 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 hover:border-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500';
 
 export function Field({ label, hint, children }: PropsWithChildren<{ label: string; hint?: string }>) {
   return (

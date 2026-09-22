@@ -31,3 +31,50 @@ describe('auto-apply safety rules', () => {
     expect(autoApplyBlocker({ ...on, minScore: 70 }, { ...ok, score: 85 })).toBeNull();
   });
 });
+
+describe('AutoApplyService.maybeAutoDraft', () => {
+  const { AutoApplyService, AUTO_DRAFT_MIN_SCORE } = jest.requireActual('../modules/email/auto-apply.service');
+
+  function build(job: { analysis: { finalMatchScore: number } | null } | null, existingDraft: unknown) {
+    const prisma = {
+      job: { findUnique: jest.fn().mockResolvedValue(job) },
+      emailDraft: { findUnique: jest.fn().mockResolvedValue(existingDraft) },
+    };
+    const apps = { ensureForJob: jest.fn().mockResolvedValue({ id: 'app-1' }) };
+    const generation = { generate: jest.fn().mockResolvedValue({ generatedBy: 'ai' }) };
+    const svc = new AutoApplyService(prisma, {}, apps, generation, {}, {});
+    return { svc, prisma, apps, generation };
+  }
+
+  it(`generates a draft once a job scores at least ${AUTO_DRAFT_MIN_SCORE}`, async () => {
+    const { svc, apps, generation } = build({ analysis: { finalMatchScore: AUTO_DRAFT_MIN_SCORE } }, null);
+    await svc.maybeAutoDraft('job-1');
+    expect(apps.ensureForJob).toHaveBeenCalledWith('job-1');
+    expect(generation.generate).toHaveBeenCalledWith('app-1');
+  });
+
+  it('does nothing below the threshold', async () => {
+    const { svc, apps, generation } = build({ analysis: { finalMatchScore: AUTO_DRAFT_MIN_SCORE - 1 } }, null);
+    await svc.maybeAutoDraft('job-1');
+    expect(apps.ensureForJob).not.toHaveBeenCalled();
+    expect(generation.generate).not.toHaveBeenCalled();
+  });
+
+  it('never overwrites a draft that already exists', async () => {
+    const { svc, generation } = build({ analysis: { finalMatchScore: 90 } }, { subject: 'existing' });
+    await svc.maybeAutoDraft('job-1');
+    expect(generation.generate).not.toHaveBeenCalled();
+  });
+
+  it('does nothing for a job with no analysis yet', async () => {
+    const { svc, apps } = build(null, null);
+    await svc.maybeAutoDraft('job-1');
+    expect(apps.ensureForJob).not.toHaveBeenCalled();
+  });
+
+  it('never throws, even when a dependency fails', async () => {
+    const { svc, prisma } = build({ analysis: { finalMatchScore: 90 } }, null);
+    prisma.emailDraft.findUnique.mockRejectedValue(new Error('db down'));
+    await expect(svc.maybeAutoDraft('job-1')).resolves.toBeUndefined();
+  });
+});
