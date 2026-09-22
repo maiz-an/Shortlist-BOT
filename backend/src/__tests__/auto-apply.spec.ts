@@ -42,8 +42,9 @@ describe('AutoApplyService.maybeAutoDraft', () => {
     };
     const apps = { ensureForJob: jest.fn().mockResolvedValue({ id: 'app-1' }) };
     const generation = { generate: jest.fn().mockResolvedValue({ generatedBy: 'ai' }) };
-    const svc = new AutoApplyService(prisma, {}, apps, generation, {}, {});
-    return { svc, prisma, apps, generation };
+    const whatsapp = { notifyAutoApplied: jest.fn() };
+    const svc = new AutoApplyService(prisma, {}, apps, generation, {}, {}, whatsapp);
+    return { svc, prisma, apps, generation, whatsapp };
   }
 
   it(`generates a draft once a job scores at least ${AUTO_DRAFT_MIN_SCORE}`, async () => {
@@ -76,5 +77,42 @@ describe('AutoApplyService.maybeAutoDraft', () => {
     const { svc, prisma } = build({ analysis: { finalMatchScore: 90 } }, null);
     prisma.emailDraft.findUnique.mockRejectedValue(new Error('db down'));
     await expect(svc.maybeAutoDraft('job-1')).resolves.toBeUndefined();
+  });
+});
+
+describe('AutoApplyService.maybeApply', () => {
+  const { AutoApplyService } = jest.requireActual('../modules/email/auto-apply.service');
+  const job = {
+    id: 'job-1', title: 'Full Stack Developer', company: 'Acme', status: 'REVIEW', applicationEmail: 'hr@acme.com',
+    analysis: { finalMatchScore: 92, recommendation: 'APPLY' },
+  };
+
+  function buildReady() {
+    const prisma = { job: { findUnique: jest.fn().mockResolvedValue(job) }, emailMessage: { count: jest.fn().mockResolvedValue(0) } };
+    const settings = { get: jest.fn().mockResolvedValue({ enabled: true, minScore: 80, dailyLimit: 10 }) };
+    const apps = { ensureForJob: jest.fn().mockResolvedValue({ id: 'app-1' }), update: jest.fn() };
+    const generation = { generate: jest.fn().mockResolvedValue({ generatedBy: 'ai' }) };
+    const sender = { send: jest.fn().mockResolvedValue(undefined) };
+    const email = { status: jest.fn().mockResolvedValue({ connected: true }) };
+    const whatsapp = { notifyAutoApplied: jest.fn() };
+    const svc = new AutoApplyService(prisma, settings, apps, generation, sender, email, whatsapp);
+    return { svc, prisma, sender, whatsapp };
+  }
+
+  it('tells WhatsApp once the application actually sends, with the job and its score', async () => {
+    const { svc, sender, whatsapp } = buildReady();
+    const result = await svc.maybeApply('job-1');
+    expect(result.applied).toBe(true);
+    expect(sender.send).toHaveBeenCalled();
+    expect(whatsapp.notifyAutoApplied).toHaveBeenCalledWith({ id: 'job-1', title: 'Full Stack Developer', company: 'Acme' }, 92);
+  });
+
+  it('never notifies WhatsApp when auto-apply is blocked (nothing was actually sent)', async () => {
+    const { svc, prisma, whatsapp } = buildReady();
+    // Recommendation is MAYBE, not APPLY - autoApplyBlocker should stop this before anything sends.
+    prisma.job.findUnique.mockResolvedValue({ ...job, analysis: { ...job.analysis, recommendation: 'MAYBE' } });
+    const result = await svc.maybeApply('job-1');
+    expect(result.applied).toBe(false);
+    expect(whatsapp.notifyAutoApplied).not.toHaveBeenCalled();
   });
 });

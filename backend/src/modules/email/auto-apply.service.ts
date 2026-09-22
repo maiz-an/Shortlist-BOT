@@ -5,6 +5,7 @@ import { AutoApplySettings, SettingsService } from '../settings/settings.service
 import { EmailGenerationService } from './email-generation.service';
 import { EmailSendService } from './email-send.service';
 import { EMAIL_PROVIDER, EmailProvider } from './email-provider';
+import { WhatsAppService } from '../whatsapp/whatsapp.module';
 
 /** A job scoring at least this is worth having an email ready for, even before the user opens it. */
 export const AUTO_DRAFT_MIN_SCORE = 50;
@@ -45,6 +46,7 @@ export class AutoApplyService {
     private readonly generation: EmailGenerationService,
     private readonly sender: EmailSendService,
     @Inject(EMAIL_PROVIDER) private readonly email: EmailProvider,
+    private readonly whatsapp: WhatsAppService,
   ) {}
 
   /** Called after a job newly reaches REVIEW. Never throws: a failure just leaves the job for manual review. */
@@ -78,6 +80,7 @@ export class AutoApplyService {
       await this.apps.update(app.id, { notes: `Applied automatically (match ${job.analysis.finalMatchScore}%).` });
       await this.sender.send(app.id, { confirm: true });
       this.logger.log({ event: 'autoapply.sent', jobId, title: job.title, company: job.company, applicationId: app.id, score: job.analysis.finalMatchScore });
+      await this.whatsapp.notifyAutoApplied({ id: jobId, title: job.title, company: job.company }, job.analysis.finalMatchScore);
       return { applied: true };
     } catch (err) {
       const reason = (err as Error).message;

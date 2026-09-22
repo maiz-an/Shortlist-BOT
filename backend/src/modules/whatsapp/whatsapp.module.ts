@@ -185,6 +185,26 @@ export class WhatsAppService implements OnApplicationBootstrap {
       this.logger.warn({ event: 'whatsapp.notify_failed', jobId: job.id, error: (err as Error).message });
     }
   }
+
+  /**
+   * Tells you an application just went out by itself. Uses the same on/off switch and number as
+   * notifyIfMatch (one "WhatsApp alerts" setting, not two) - respects it being turned off. Never throws
+   * and never blocks sending the application: this runs after the email has already gone out.
+   */
+  async notifyAutoApplied(job: { id: string; title: string; company: string }, score: number): Promise<void> {
+    try {
+      if (!this.configured) return;
+      const s = await this.settings.get('whatsapp_notify');
+      if (!s.enabled || !s.phone) return;
+
+      const front = this.config.get<string>('FRONTEND_URL', 'http://localhost:5870');
+      const text = `✅ Auto-applied (${score}% match): ${job.title} at ${job.company}\n${front}/jobs/${job.id}`;
+      const sent = await this.sendText(s.phone, text);
+      if (sent) this.logger.log({ event: 'whatsapp.notified_auto_apply', jobId: job.id, title: job.title, company: job.company, score });
+    } catch (err) {
+      this.logger.warn({ event: 'whatsapp.notify_auto_apply_failed', jobId: job.id, error: (err as Error).message });
+    }
+  }
 }
 
 class TestMessageDto {

@@ -3,6 +3,16 @@
 All notable changes to Shortlist BOT. Versions follow [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`.
 The single source of truth for the current version is the `VERSION` file; `backend/package.json` and `frontend/package.json` match it.
 
+## [1.6.0] - 2026-09-22
+
+### Added
+- **WhatsApp alert when auto-apply sends an application by itself**, not just for a strong match. Uses the same "WhatsApp alerts" switch and number as the score alert - one setting, not two.
+- **Sidebar status icons are colour-blind friendly.** Backend / Database / Ollama now show a check, an X, or a dashed circle - not colour alone - and the check breathes gently while things are working, so "alive" is visible at a glance.
+- **GulfTalent verified end to end with a real account**: 18 real jobs pulled in one search, full descriptions and working apply links, flowing through analysis with no errors.
+
+### Fixed
+- **The mobile top bar is `fixed`, not `sticky`**, at your request (some phones handle `sticky` inconsistently). Confirmed it stays pinned while scrolling a full page; the header's own look is unchanged - an invisible twin reserves its space so nothing sits underneath it.
+
 ## [1.5.0] - 2026-09-22
 
 ### Fixed

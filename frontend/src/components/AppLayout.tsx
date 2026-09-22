@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion, useAnimationControls, useReducedMotion } from 'framer-motion';
-import { Briefcase, Database, LogOut, FileText, HeartPulse, LayoutDashboard, Mail, Menu, Plug, Search, Send, Settings, X } from 'lucide-react';
+import {
+  Briefcase, CheckCircle2, CircleDashed, Database, LogOut, FileText, HeartPulse, LayoutDashboard, Mail, Menu, Plug, Search, Send, Settings, X, XCircle,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiClient } from '../services/api-client';
 import { useAiStatus } from '../features/settings/api';
@@ -65,11 +67,24 @@ function NavItem({ to, label, icon: Icon, onNavigate }: { to: string; label: str
   );
 }
 
+/**
+ * Ok/error/unknown as a distinct shape (check / X / dashed circle), not just a colour, since colour alone
+ * does not read for everyone. The check also breathes gently while things are working, so "alive" is
+ * visible at a glance rather than relying on the exact shade of green.
+ */
 function StatusRow({ ok, label, detail }: { ok: boolean | undefined; label: string; detail?: string }) {
+  const reduce = useReducedMotion();
+  const Icon = ok === undefined ? CircleDashed : ok ? CheckCircle2 : XCircle;
   return (
     <li className="flex items-center gap-2" title={detail}>
-      <span className={cx('h-1.5 w-1.5 shrink-0 rounded-full', ok === undefined ? 'bg-slate-300' : ok ? 'bg-emerald-600' : 'bg-rose-600')} />
-      <span className={cx('truncate', ok === false ? 'text-rose-700' : 'text-slate-600')}>{label}</span>
+      <motion.span
+        className={cx('inline-flex shrink-0', ok === undefined ? 'text-slate-400' : ok ? 'text-emerald-600' : 'text-rose-600')}
+        animate={ok && !reduce ? { opacity: [1, 0.55, 1] } : undefined}
+        transition={ok && !reduce ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } : undefined}
+      >
+        <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+      </motion.span>
+      <span className={cx('truncate', ok === false ? 'font-medium text-rose-700' : 'text-slate-600')}>{label}</span>
     </li>
   );
 }
@@ -116,10 +131,15 @@ export function AppLayout() {
     <div className="min-h-screen lg:flex">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[70] focus:rounded-md focus:bg-card focus:px-3 focus:py-2">Skip to content</a>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-card px-4 py-2.5 lg:hidden">
+      <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-card px-4 py-2.5 lg:hidden">
         <span className="flex items-center gap-2"><LogoMark size={22} /><Wordmark className="text-lg" /></span>
         <button className="rounded-md p-2 hover:bg-slate-100" onClick={() => setOpen(true)} aria-label="Open menu"><Menu className="h-5 w-5" /></button>
       </header>
+      {/* Fixed (not sticky) takes the header out of flow, so this invisible twin reserves its exact height. */}
+      <div aria-hidden className="invisible flex items-center justify-between px-4 py-2.5 lg:hidden">
+        <span className="flex items-center gap-2"><LogoMark size={22} /><Wordmark className="text-lg" /></span>
+        <span className="rounded-md p-2"><Menu className="h-5 w-5" /></span>
+      </div>
 
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-slate-200 bg-card px-3 py-5 lg:block">
         <Sidebar />

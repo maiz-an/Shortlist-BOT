@@ -2,7 +2,7 @@
 
 **A local-first job application assistant.** It finds jobs, removes duplicates, reads each one with a local AI model, picks the right CV, drafts the email, and lets you review and send it from your own Gmail. Everything runs on your computer. No paid APIs, no cloud, nothing is sent without your say-so (auto-apply is off unless you turn it on).
 
-![version](https://img.shields.io/badge/version-1.5.0-265496)
+![version](https://img.shields.io/badge/version-1.6.0-265496)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![node](https://img.shields.io/badge/node-%E2%89%A520-339933)
 ![CI](https://github.com/maiz-an/Shortlist-BOT/actions/workflows/ci.yml/badge.svg)

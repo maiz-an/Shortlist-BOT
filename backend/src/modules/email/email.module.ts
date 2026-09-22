@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ApplicationsModule } from '../applications/applications.controller';
 import { CvProfilesModule } from '../cv-profiles/cv-profiles.controller';
 import { SettingsModule } from '../settings/settings.controller';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { EMAIL_PROVIDER, EmailAuthError, EmailProvider } from './email-provider';
 import { AutoApplyService } from './auto-apply.service';
 import { EmailGenerationService } from './email-generation.service';
@@ -94,7 +95,7 @@ export class EmailController {
 }
 
 @Module({
-  imports: [ApplicationsModule, CvProfilesModule, SettingsModule],
+  imports: [ApplicationsModule, CvProfilesModule, SettingsModule, WhatsAppModule],
   controllers: [EmailController],
   providers: [GmailProvider, { provide: EMAIL_PROVIDER, useExisting: GmailProvider }, EmailGenerationService, EmailSendService, AutoApplyService],
   exports: [AutoApplyService],
